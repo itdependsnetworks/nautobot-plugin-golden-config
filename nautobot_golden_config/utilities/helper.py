@@ -6,11 +6,13 @@ from jinja2.exceptions import TemplateError, TemplateSyntaxError
 from django.db.models import Q
 
 from nornir_nautobot.exceptions import NornirNautobotException
+from nornir_nautobot.plugins.tasks.dispatcher import _DEFAULT_DRIVERS_MAPPING
 from nautobot.dcim.filters import DeviceFilterSet
 from nautobot.dcim.models import Device, Platform
 
 from nautobot_golden_config import models
-from nautobot_golden_config.utilities.constant import ALLOWED_OS
+from nautobot_golden_config.utilities.constant import ALLOWED_OS, PLUGIN_CFG
+
 
 FIELDS = {
     "platform",
@@ -71,6 +73,13 @@ def get_allowed_os_from_nested():
             Q(device__virtual_chassis__isnull=False) & Q(device__vc_master_for__isnull=True)
         )
     return filter_query
+
+
+def get_dispatcher():
+    """Helper method to load the dispatcher from nautobot nornir or config if defined."""
+    if PLUGIN_CFG.get("dispatcher_mapping"):
+        return PLUGIN_CFG["dispatcher_mapping"]
+    return _DEFAULT_DRIVERS_MAPPING
 
 
 def null_to_empty(val):

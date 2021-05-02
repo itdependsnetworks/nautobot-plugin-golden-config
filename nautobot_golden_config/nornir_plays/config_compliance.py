@@ -21,6 +21,7 @@ from nautobot_plugin_nornir.constants import NORNIR_SETTINGS
 from nautobot_golden_config.models import ComplianceFeature, ConfigCompliance, GoldenConfigSettings, GoldenConfiguration
 from nautobot_golden_config.utilities.helper import (
     get_allowed_os,
+    get_dispatcher,
     null_to_empty,
     verify_global_settings,
     check_jinja_template,
