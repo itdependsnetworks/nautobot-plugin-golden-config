@@ -147,6 +147,7 @@ class ComplianceFeatureForm(BootstrapMixin, forms.ModelForm):
             "description",
             "config_ordered",
             "match_config",
+            "config_type",
         )
 
 

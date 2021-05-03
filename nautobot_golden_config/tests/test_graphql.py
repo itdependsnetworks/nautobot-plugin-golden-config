@@ -8,6 +8,7 @@ from django.test.client import RequestFactory
 
 from graphql import get_default_backend
 from graphene_django.settings import graphene_settings
+from unittest.mock import patch
 
 from nautobot.dcim.models import Platform, Site, Device, Manufacturer, DeviceRole, DeviceType
 
@@ -23,7 +24,7 @@ from nautobot_golden_config.models import (
 # Use the proper swappable User model
 User = get_user_model()
 
-
+@patch.object(ConfigCompliance.clean, True)
 class TestGraphQLQuery(TestCase):  # pylint: disable=too-many-instance-attributes
     """Test GraphQL Queries for Golden Config Plugin."""
 
@@ -69,9 +70,17 @@ class TestGraphQLQuery(TestCase):  # pylint: disable=too-many-instance-attribute
             sot_agg_query="{test_model}",
         )
 
+        ComplianceFeature.objects.create(
+            name="aaa",
+            platform=self.platform1,
+            description="Test Desc",
+            config_ordered=True,
+            match_config="aaa ",
+        )
+
         ConfigCompliance.objects.create(
             device=self.device1,
-            feature="aaa",
+            name="aaa",
             compliance=True,
             actual="aaa test",
             intended="aaa test",
@@ -85,14 +94,6 @@ class TestGraphQLQuery(TestCase):  # pylint: disable=too-many-instance-attribute
             backup_config="interface Eth1/1\ndescription test",
             intended_config="interface Ethernet1/1\ndescription test",
             compliance_config="interface Ethernet1/1\ndescription test",
-        )
-
-        ComplianceFeature.objects.create(
-            name="test",
-            platform=self.platform1,
-            description="Test Desc",
-            config_ordered=True,
-            match_config="test",
         )
 
         ConfigRemove.objects.create(
@@ -118,19 +119,19 @@ class TestGraphQLQuery(TestCase):  # pylint: disable=too-many-instance-attribute
         """Test GraphQL Config Compliance Model."""
         query = """
             query {
-            config_compliances {
-                device {
-                name
+                config_compliances {
+                    device {
+                        name
+                    }
+                    name
+                    compliance
+                    actual
+                    intended
+                    missing
+                    extra
+                    ordered
+                    }
                 }
-            feature
-            compliance
-            actual
-            intended
-            missing
-            extra
-            ordered
-            }
-            }
         """
         response_data = {
             "config_compliances": [
@@ -139,7 +140,7 @@ class TestGraphQLQuery(TestCase):  # pylint: disable=too-many-instance-attribute
                     "compliance": True,
                     "device": {"name": "Device 1"},
                     "extra": "",
-                    "feature": "aaa",
+                    "name": "aaa",
                     "intended": "aaa test",
                     "missing": "",
                     "ordered": False,
@@ -154,15 +155,15 @@ class TestGraphQLQuery(TestCase):  # pylint: disable=too-many-instance-attribute
         """Test Configuration management Model."""
         query = """
             query {
-            golden_configurations {
-                device {
-                name
+                golden_configurations {
+                    device {
+                        name
+                    }
+                    backup_config
+                    intended_config
+                    compliance_config
+                    }
                 }
-            backup_config
-            intended_config
-            compliance_config
-            }
-            }
         """
         # Need to figure out how to execute a mock Job.
         response_data = {
@@ -183,15 +184,15 @@ class TestGraphQLQuery(TestCase):  # pylint: disable=too-many-instance-attribute
         """Test Configuration Compliance Details Model."""
         query = """
             query {
-            compliance_features {
-                name
-                platform {
-                name
+                compliance_features {
+                    name
+                    platform {
+                        name
+                    }
+                    description
+                    config_ordered
+                    match_config
                 }
-                description
-                config_ordered
-                match_config
-            }
             }
         """
         response_data = {
@@ -213,14 +214,14 @@ class TestGraphQLQuery(TestCase):  # pylint: disable=too-many-instance-attribute
         """Test GraphQL Golden Config Settings Model."""
         query = """
             query {
-            golden_config_settingss {
-                backup_path_template
-                intended_path_template
-                jinja_path_template
-                backup_test_connectivity
-                shorten_sot_query
-                sot_agg_query
-            }
+                golden_config_settingss {
+                    backup_path_template
+                    intended_path_template
+                    jinja_path_template
+                    backup_test_connectivity
+                    shorten_sot_query
+                    sot_agg_query
+                }
             }
         """
         response_data = {
@@ -243,14 +244,14 @@ class TestGraphQLQuery(TestCase):  # pylint: disable=too-many-instance-attribute
         """Test Regex Line Removal."""
         query = """
             query {
-            backup_config_line_removes {
-                name
-                platform {
-                name
+                backup_config_line_removes {
+                    name
+                    platform {
+                        name
+                    }
+                    description
+                    regex_line
                 }
-                description
-                regex_line
-            }
             }
         """
 
@@ -272,15 +273,15 @@ class TestGraphQLQuery(TestCase):  # pylint: disable=too-many-instance-attribute
         """Test Line Replacement Model."""
         query = """
             query {
-            backup_config_line_replaces {
-                name
-                platform {
-                name
+                backup_config_line_replaces {
+                    name
+                    platform {
+                        name
+                    }
+                    description
+                    substitute_text
+                    replaced_text
                 }
-                description
-                substitute_text
-                replaced_text
-            }
             }
         """
 

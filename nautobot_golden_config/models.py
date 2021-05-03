@@ -29,6 +29,72 @@ def null_to_empty(val):
 
 @extras_features(
     "custom_fields",
+    "custom_validators",
+    "export_templates",
+    "graphql",
+    "webhooks",
+)
+class ComplianceFeature(PrimaryModel):
+    """Configuration compliance details."""
+    CLI = "cli"
+    JSON = "json"
+    _CHOICES = ( 
+        (CLI, 'CLI'),
+        (JSON, 'JSON'),
+    )
+
+    name = models.CharField(max_length=255, null=False, blank=False, validators=[validate_slug])
+    platform = models.ForeignKey(
+        to="dcim.Platform",
+        on_delete=models.CASCADE,
+        related_name="compliance_features",
+        null=False,
+        blank=False,
+    )
+    description = models.CharField(
+        max_length=200,
+        blank=True,
+    )
+    config_ordered = models.BooleanField(
+        null=False,
+        blank=False,
+        verbose_name="Configured Ordered",
+        help_text="Whether or not the configuration order matters, such as in ACLs.",
+    )
+    match_config = models.TextField(
+        null=True,
+        blank=False,
+        verbose_name="Config to Match",
+        help_text="The config to match that is matched based on the parent most configuration. e.g. `router bgp` or `ntp`.",
+    )
+    config_type = models.CharField(max_length=20, default=CLI, choices=_CHOICES, help_text="Whether the config is in cli or json/structured format.")
+
+
+    class Meta:
+        """Meta information for ComplianceFeature model."""
+
+        ordering = ("name", "platform")
+        unique_together = (
+            "name",
+            "platform",
+        )
+
+    def __str__(self):
+        """Return a sane string representation of the instance."""
+        return f"{self.platform} - {self.name}"
+
+    def get_absolute_url(self):  # pylint: disable=no-self-use
+        """Absolute url for the ComplianceFeature instance."""
+        return reverse("plugins:nautobot_golden_config:compliancefeature_list")
+
+    def clean(self):
+        """Verify that if cli, then match_config is set."""
+        if self.config_type == "CLI" and not self.match_config:
+            raise ValidationError("CLI configuration set, but no configuration set to match.")
+
+
+@extras_features(
+    "custom_fields",
     "custom_links",
     "custom_validators",
     "export_templates",
@@ -41,8 +107,8 @@ class ConfigCompliance(PrimaryModel):
     """Configuration compliance details."""
 
     device = models.ForeignKey(to="dcim.Device", on_delete=models.CASCADE, help_text="The device", blank=False)
-    name = models.CharField(max_length=32, validators=[validate_slug])
-    compliance = models.BooleanField(null=True)
+    name = models.ForeignKey(to="ComplianceFeature", on_delete=models.CASCADE, blank=False, related_name="feature")
+    compliance = models.BooleanField(null=True, blank=True)
     actual = models.TextField(blank=True, help_text="Actual Configuration for feature")
     intended = models.TextField(blank=True, help_text="Intended Configuration for feature")
     missing = models.TextField(blank=True, help_text="Configuration that should be on the device.")
@@ -84,12 +150,11 @@ class ConfigCompliance(PrimaryModel):
         super().save(*args, **kwargs)
 
     def clean(self):
-        """Ensures a secret is not leaked into the database object."""
-        self.reordered_list_items = {}
-        obj = ComplianceFeature.objects.get(platform=self.device.platform, name=self.name)
-        features = [{"ordered": obj.config_ordered, "name": obj.name, "section": obj.match_config.splitlines()}]
+        """Perform that actual compliance check."""
+        # obj = ComplianceFeature.objects.get(platform=self.device.platform, name=self.name)
+        features = [{"ordered": self.name.config_ordered, "name": self.name.name, "section": self.name.match_config.splitlines()}]
         value = compliance(features, self.actual, self.intended, self.device.platform.slug, cfg_type="string")[
-            self.name
+            self.name.name
         ]
         self.compliance = value["compliant"]
         self.ordered: value["ordered_compliant"]
@@ -165,59 +230,6 @@ class GoldenConfiguration(PrimaryModel):
     def __str__(self):
         """String representation of a the compliance."""
         return f"{self.device}"
-
-
-@extras_features(
-    "custom_fields",
-    "custom_validators",
-    "export_templates",
-    "graphql",
-    "webhooks",
-)
-class ComplianceFeature(PrimaryModel):
-    """Configuration compliance details."""
-
-    name = models.CharField(max_length=255, null=False, blank=False, validators=[validate_slug])
-    platform = models.ForeignKey(
-        to="dcim.Platform",
-        on_delete=models.CASCADE,
-        related_name="compliance_features",
-        null=False,
-        blank=False,
-    )
-    description = models.CharField(
-        max_length=200,
-        blank=True,
-    )
-    config_ordered = models.BooleanField(
-        null=False,
-        blank=False,
-        verbose_name="Configured Ordered",
-        help_text="Whether or not the configuration order matters, such as in ACLs.",
-    )
-    match_config = models.TextField(
-        null=False,
-        blank=False,
-        verbose_name="Config to Match",
-        help_text="The config to match that is matched based on the parent most configuration. e.g. `router bgp` or `ntp`.",
-    )
-
-    class Meta:
-        """Meta information for ComplianceFeature model."""
-
-        ordering = ("name", "platform")
-        unique_together = (
-            "name",
-            "platform",
-        )
-
-    def __str__(self):
-        """Return a sane string representation of the instance."""
-        return f"{self.platform} - {self.name}"
-
-    def get_absolute_url(self):  # pylint: disable=no-self-use
-        """Absolute url for the Compliance instance."""
-        return reverse("plugins:nautobot_golden_config:compliancefeature_list")
 
 
 class GoldenConfigSettings(PrimaryModel):

@@ -42,7 +42,7 @@ def get_features():
         if not features.get(platform):
             features[platform] = []
         features[platform].append(
-            {"ordered": obj.config_ordered, "name": obj.name, "section": obj.match_config.splitlines()}
+            {"ordered": obj.config_ordered, "obj": obj, "section": obj.match_config.splitlines()}
         )
     return features
 
@@ -108,8 +108,9 @@ def run_compliance(  # pylint: disable=too-many-arguments,too-many-locals
         # using update_or_create() method to conveniently update actual obj or create new one.
         ConfigCompliance.objects.update_or_create(
             device=obj,
-            name=feature["name"],
-            defaults=defaults,
+            name=feature["obj"],
+            actual=section_config(feature, backup_cfg, platform),
+            intended=section_config(feature, intended_cfg, platform),
         )
 
     compliance_obj.compliance_last_success_date = task.host.defaults.data["now"]

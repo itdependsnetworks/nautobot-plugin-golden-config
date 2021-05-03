@@ -6,8 +6,6 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 
-from nautobot.dcim.models import Device
-
 from ..models import GoldenConfigSettings, ConfigRemove, ConfigReplace
 from ..utilities.graphql import graph_ql_query
 from .serializer import GraphQLSerializer, LineRemoveSerializer, LineReplaceSerializer

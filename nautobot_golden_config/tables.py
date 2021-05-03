@@ -159,7 +159,7 @@ class ConfigComplianceTable(BaseTable):
         # Used ConfigCompliance.objects on purpose, vs queryset (set in args[0]), as there were issues with that as
         # well as not as expected from user standpoint (e.g. not always the same values on columns depending on
         # filtering)
-        features = list(models.ConfigCompliance.objects.order_by("name").values_list("name", flat=True).distinct())
+        features = list(models.ConfigCompliance.objects.order_by("name__name").values_list("name__name", flat=True).distinct())
         extra_columns = [(feature, ComplianceColumn(verbose_name=feature)) for feature in features]
         kwargs["extra_columns"] = extra_columns
         # Nautobot's BaseTable.configurable_columns() only recognizes columns in self.base_columns,

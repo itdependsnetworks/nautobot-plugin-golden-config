@@ -77,7 +77,7 @@ class ConfigComplianceListView(generic.ObjectListView):
 
     filterset = filters.ConfigComplianceFilter
     filterset_form = forms.ConfigComplianceFilterForm
-    queryset = models.ConfigCompliance.objects.filter(get_allowed_os_from_nested())
+    queryset = models.ConfigCompliance.objects.all()
     template_name = "nautobot_golden_config/compliance_report.html"
     table = tables.ConfigComplianceTable
 
@@ -90,17 +90,18 @@ class ConfigComplianceListView(generic.ObjectListView):
         # Current implementation of for name (feature) in ConfigCompliance.objects.values_list(), to always show all
         # features, however this may or may not be desirable in the future. To modify, change to
         # self.queryset.values_list()
-        return (
-            self.queryset.annotate(
+        return = (
+            self.queryset.filter(get_allowed_os_from_nested()).annotate(
                 **{
-                    name: Subquery(self.queryset.filter(device=OuterRef("device_id"), name=name).values("compliance"))
-                    for name in models.ConfigCompliance.objects.values_list("name", flat=True)
+                    models.ComplianceFeature.objects.get(pk=feature_uuid).name: 
+                       Subquery(self.queryset.filter(device=OuterRef("device_id"), name=models.ComplianceFeature.objects.get(pk=feature_uuid)).values("compliance"))
+                    for feature_uuid in models.ConfigCompliance.objects.values_list("name", flat=True)
                     .distinct()
-                    .order_by("name")
+                    .order_by("name__name")
                 }
             )
             .distinct(
-                *list(models.ConfigCompliance.objects.values_list("name", flat=True).distinct()) + ["device__name"]
+                *list(models.ConfigCompliance.objects.values_list("name__name", flat=True).distinct()) + ["device__name"]
             )
             .order_by("device__name")
         )

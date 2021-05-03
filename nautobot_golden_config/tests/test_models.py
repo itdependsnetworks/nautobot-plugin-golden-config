@@ -43,12 +43,12 @@ class GoldenConfigSettingsModelTestCase(TestCase):
         with self.assertRaises(ValidationError) as error:
             self.global_settings.clean()
         self.assertEqual(
-            error.exception.message, "The GraphQL query must start with exactly `query ($device: String!)`"
+            error.exception.message, "The GraphQL query must start with exactly `query ($device_id: ID!)`"
         )
 
     def test_good_graphql_query_validate_starts_with(self):
         """Ensure clean() method returns None when valid query is sent through."""
-        self.global_settings.sot_agg_query = "query ($device: String!) {devices(name:$device) {id}}"
+        self.global_settings.sot_agg_query = "query ($device_id: ID!) {device(id: $device_id) {id}}"
         self.assertEqual(self.global_settings.clean(), None)
 
 
