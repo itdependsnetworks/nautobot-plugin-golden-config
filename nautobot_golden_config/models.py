@@ -14,7 +14,7 @@ from nautobot.extras.models import ObjectChange
 from nautobot.extras.utils import extras_features
 from nautobot.utilities.utils import serialize_object
 from nautobot.core.models.generics import PrimaryModel
-from netutils.config.compliance import compliance
+from netutils.config.compliance import feature_compliance
 
 LOGGER = logging.getLogger(__name__)
 GRAPHQL_STR_START = "query ($device_id: ID!)"
@@ -151,11 +151,8 @@ class ConfigCompliance(PrimaryModel):
 
     def clean(self):
         """Perform that actual compliance check."""
-        # obj = ComplianceFeature.objects.get(platform=self.device.platform, name=self.name)
-        features = [{"ordered": self.name.config_ordered, "name": self.name.name, "section": self.name.match_config.splitlines()}]
-        value = compliance(features, self.actual, self.intended, self.device.platform.slug, cfg_type="string")[
-            self.name.name
-        ]
+        feature = {"ordered": self.name.config_ordered, "name": self.name.name, "section": self.name.match_config.splitlines()}
+        value = feature_compliance(feature, self.actual, self.intended, self.device.platform.slug)
         self.compliance = value["compliant"]
         self.ordered: value["ordered_compliant"]
         self.missing = null_to_empty(value["missing"])

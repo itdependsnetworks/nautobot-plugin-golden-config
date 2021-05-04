@@ -90,7 +90,7 @@ class ConfigComplianceListView(generic.ObjectListView):
         # Current implementation of for name (feature) in ConfigCompliance.objects.values_list(), to always show all
         # features, however this may or may not be desirable in the future. To modify, change to
         # self.queryset.values_list()
-        return = (
+        return (
             self.queryset.filter(get_allowed_os_from_nested()).annotate(
                 **{
                     models.ComplianceFeature.objects.get(pk=feature_uuid).name: 
