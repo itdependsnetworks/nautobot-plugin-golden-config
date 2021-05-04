@@ -210,12 +210,10 @@ class ConfigComplianceView(ContentTypePermissionRequiredMixin, generic.View):
 
     def get(self, request, pk):
         """Read request into a view of a single device."""
-        # device = Device.objects.get(pk=pk)
-        # print(pk)
-        compliance_details = models.ConfigCompliance.objects.filter(pk=pk)
-        device = compliance_details.first()
+        device = Device.objects.get(pk=pk)
+        compliance_details = models.ConfigCompliance.objects.filter(device=device)
 
-        config_details = {"compliance_details": compliance_details, "device_name": device.rule.feature.name}
+        config_details = {"compliance_details": compliance_details, "device": device}
 
         return render(
             request,
@@ -234,14 +232,14 @@ class ComplianceDeviceFilteredReport(ContentTypePermissionRequiredMixin, generic
     def get(self, request, pk, compliance):
         """Read request into a view of a single device."""
         device = Device.objects.get(pk=pk)
+        compliance_details = models.ConfigCompliance.objects.filter(device=device)
+
         if compliance == "compliant":
-            compliance_details = models.ConfigCompliance.objects.filter(device=device).order_by("feature")
             compliance_details = compliance_details.filter(compliance=True)
         else:
-            compliance_details = models.ConfigCompliance.objects.filter(device=device).order_by("feature")
             compliance_details = compliance_details.filter(compliance=False)
 
-        config_details = {"compliance_details": compliance_details, "device_name": device.name}
+        config_details = {"compliance_details": compliance_details, "device": device}
         return render(
             request,
             "nautobot_golden_config/compliance_device_report.html",
