@@ -1,6 +1,7 @@
 """Django Models for tracking the configuration compliance per feature and device."""
 
 import logging
+import json
 
 from django.db import models
 from django.core.exceptions import ValidationError
@@ -9,6 +10,7 @@ from django.shortcuts import reverse
 from graphene_django.settings import graphene_settings
 from graphql import get_default_backend
 from graphql.error import GraphQLSyntaxError
+
 
 from nautobot.extras.models import ObjectChange
 from nautobot.extras.utils import extras_features
@@ -107,7 +109,7 @@ class ConfigCompliance(PrimaryModel):
     """Configuration compliance details."""
 
     device = models.ForeignKey(to="dcim.Device", on_delete=models.CASCADE, help_text="The device", blank=False)
-    name = models.ForeignKey(to="ComplianceFeature", on_delete=models.CASCADE, blank=False, related_name="feature")
+    feature = models.ForeignKey(to="ComplianceFeature", on_delete=models.CASCADE, blank=False, related_name="feature")
     compliance = models.BooleanField(null=True, blank=True)
     actual = models.TextField(blank=True, help_text="Actual Configuration for feature")
     intended = models.TextField(blank=True, help_text="Intended Configuration for feature")
@@ -123,7 +125,7 @@ class ConfigCompliance(PrimaryModel):
 
     def to_csv(self):
         """Indicates model fields to return as csv."""
-        return (self.device.name, self.name, self.name, self.compliance)
+        return (self.device.name, self.feature.name, self.compliance)
 
     def to_objectchange(self, action):
         """Remove actual and intended configuration from changelog."""
@@ -138,11 +140,11 @@ class ConfigCompliance(PrimaryModel):
         """Set unique together fields for model."""
 
         ordering = ["device"]
-        unique_together = ("device", "name")
+        unique_together = ("device", "feature")
 
     def __str__(self):
         """String representation of a the compliance."""
-        return f"{self.device} -> {self.name} -> {self.compliance}"
+        return f"{self.device} -> {self.feature} -> {self.compliance}"
 
     def save(self, *args, **kwargs):
         """Overloading save to call full_clean that invokes clean."""
@@ -151,7 +153,7 @@ class ConfigCompliance(PrimaryModel):
 
     def clean(self):
         """Perform that actual compliance check."""
-        feature = {"ordered": self.name.config_ordered, "name": self.name.name, "section": self.name.match_config.splitlines()}
+        feature = {"ordered": self.feature.config_ordered, "name": self.feature.name, "section": self.feature.match_config.splitlines()}
         value = feature_compliance(feature, self.actual, self.intended, self.device.platform.slug)
         self.compliance = value["compliant"]
         self.ordered: value["ordered_compliant"]

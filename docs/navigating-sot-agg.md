@@ -72,7 +72,7 @@ GraphQL may be new to many users, and while the GraphiQL interface is great way 
 query ($device_id: ID!) {
   device(id: $device_id) {
     config_context
-    name
+    hostname: name
     position
     serial
     primary_ip4 {
