@@ -58,11 +58,7 @@
 <h1>{% block title %}Configuration Compliance - {{ device_name }}{% endblock %}</h1>
 {% block navigation %}
 <div class="panel panel-default" style="width:100%">
-        <div class="panel-heading"><strong>Feature Navigation</strong> 
-            <a href="{% url 'plugins:nautobot_golden_config:configcompliance_filter_report' pk=device.pk compliance='compliant' %}" class="btn btn-success">Compliant</a> 
-            <a href="{% url 'plugins:nautobot_golden_config:configcompliance_filter_report' pk=device.pk compliance='non-compliant' %}" class="btn btn-danger">Non-Compliant</a>
-            <a href="{% url 'plugins:nautobot_golden_config:configcompliance' pk=device.pk %}" class="btn btn-info">Clear</a>  
-        </div>
+
     <div id="navigation">
         <table>
             <tr>
@@ -72,8 +68,8 @@
                 {% else %}
                     <td style="background-color: #d9534f;">
                 {% endif %}
-                    <a href="#{{ item.name }}">
-                        {{ item.name }}
+                    <a href="#{{ item.rule }}">
+                        {{ item.rule }}
                     </a>
                 </td>
                 {% if forloop.counter|divisibleby:"5" %}
@@ -87,8 +83,8 @@
 </div>
 {% endblock %}
 {% for item in compliance_details %}
-    <div id="{{ item.name }}" class="panel panel-default" style="width:100%">
-        <div class="panel-heading"><strong>{{ item.name|upper }}</strong></div>
+    <div id="{{ item.rule }}" class="panel panel-default" style="width:100%">
+        <div class="panel-heading"><strong>{{ item.rule|upper }}</strong></div>
         <table id="content">
         <tr>
             <td style="width:250px">Status</td>

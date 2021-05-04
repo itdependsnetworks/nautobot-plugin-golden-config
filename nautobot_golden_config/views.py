@@ -210,9 +210,12 @@ class ConfigComplianceView(ContentTypePermissionRequiredMixin, generic.View):
 
     def get(self, request, pk):
         """Read request into a view of a single device."""
-        device = Device.objects.get(pk=pk)
-        compliance_details = models.ConfigCompliance.objects.filter(device=device).order_by("feature")
-        config_details = {"compliance_details": compliance_details, "device_name": device.name}
+        # device = Device.objects.get(pk=pk)
+        # print(pk)
+        compliance_details = models.ConfigCompliance.objects.filter(pk=pk)
+        device = compliance_details.first()
+
+        config_details = {"compliance_details": compliance_details, "device_name": device.rule.feature.name}
 
         return render(
             request,
