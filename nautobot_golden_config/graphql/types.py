@@ -35,14 +35,14 @@ class GoldenConfigurationType(DjangoObjectType):
         filterset_class = filters.GoldenConfigurationFilter
 
 
-class ComplianceFeatureType(DjangoObjectType):
-    """Graphql Type Object for Compliance Feature model."""
+class ComplianceRuleType(DjangoObjectType):
+    """Graphql Type Object for Compliance Rule model."""
 
     class Meta:
         """Meta object boilerplate for GoldenConfigurationType."""
 
-        model = models.ComplianceFeature
-        filterset_class = filters.ComplianceFeatureFilter
+        model = models.ComplianceRule
+        filterset_class = filters.ComplianceRuleFilter
 
 
 class GoldenConfigSettingsType(DjangoObjectType):
@@ -75,7 +75,7 @@ class ConfigReplaceType(DjangoObjectType):
 graphql_types = [
     ConfigComplianceType,
     GoldenConfigurationType,
-    ComplianceFeatureType,
+    ComplianceRuleType,
     GoldenConfigSettingsType,
     ConfigRemoveType,
     ConfigReplaceType,

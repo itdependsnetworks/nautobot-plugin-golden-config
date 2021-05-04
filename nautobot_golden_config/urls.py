@@ -23,6 +23,19 @@ urlpatterns = [
         views.ComplianceDeviceFilteredReport.as_view(),
         name="configcompliance_filter_report",
     ),
+    path("compliance-rules/", views.ComplianceRuleListView.as_view(), name="compliancerule_list"),
+    path("compliance-rules/add/", views.ComplianceRuleEditView.as_view(), name="compliancerule_add"),
+    path(
+        "compliance-rules/delete/",
+        views.ComplianceRuleBulkDeleteView.as_view(),
+        name="compliancerule_bulk_delete",
+    ),
+    path("compliance-rules/<uuid:pk>/edit/", views.ComplianceRuleEditView.as_view(), name="compliancerule_edit"),
+    path(
+        "compliance-rules/<uuid:pk>/delete/",
+        views.ComplianceRuleDeleteView.as_view(),
+        name="compliancerule_delete",
+    ),
     path("compliance-features/", views.ComplianceFeatureListView.as_view(), name="compliancefeature_list"),
     path("compliance-features/add/", views.ComplianceFeatureEditView.as_view(), name="compliancefeature_add"),
     path(

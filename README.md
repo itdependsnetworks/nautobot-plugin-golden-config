@@ -30,7 +30,7 @@ There are many features and capabilities the plugin provides into the Nautobot e
 
 The golden configuration is driven by jobs that run a series of tasks and the result is captured in this overview.
 
-![Compliance Feature](./docs/img/golden-overview.png)
+![Compliance Rule](./docs/img/golden-overview.png)
 
 The compliance report provides a high-level overview on the compliance of your network.
 ![Compliance Report](./docs/img/compliance-report.png)
@@ -41,7 +41,7 @@ The compliance overview will provide a per device and feature overview on the co
 Drilling into a specific device and feature, you can get an immediate detailed understanding of your device.
 ![Compliance Device](./docs/img/compliance-device.png)
 
-![Compliance Feature](./docs/img/compliance-feature.png)
+![Compliance Rule](./docs/img/compliance-rule.png)
 
 ## Plugin Settings
 

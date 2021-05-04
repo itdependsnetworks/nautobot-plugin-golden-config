@@ -159,7 +159,11 @@ class ConfigComplianceTable(BaseTable):
         # Used ConfigCompliance.objects on purpose, vs queryset (set in args[0]), as there were issues with that as
         # well as not as expected from user standpoint (e.g. not always the same values on columns depending on
         # filtering)
-        features = list(models.ConfigCompliance.objects.order_by("feature__name").values_list("feature__name", flat=True).distinct())
+        features = list(
+            models.ConfigCompliance.objects.order_by("rule__feature__name")
+            .values_list("rule__feature__name", flat=True)
+            .distinct()
+        )
         extra_columns = [(feature, ComplianceColumn(verbose_name=feature)) for feature in features]
         kwargs["extra_columns"] = extra_columns
         # Nautobot's BaseTable.configurable_columns() only recognizes columns in self.base_columns,
@@ -249,25 +253,39 @@ class ComplianceFeatureTable(BaseTable):
     """Table to display Compliance Features."""
 
     pk = ToggleColumn()
-    name = LinkColumn("plugins:nautobot_golden_config:compliancefeature_edit", args=[A("pk")])
-    match_config = TemplateColumn(template_code=MATCH_CONFIG)
+    feature = LinkColumn("plugins:nautobot_golden_config:compliancefeature_edit", args=[A("pk")])
 
     class Meta(BaseTable.Meta):
         """Table to display Compliance Features Meta Data."""
 
         model = models.ComplianceFeature
-        fields = ("pk", "name", "platform", "description", "config_ordered", "match_config")
-        default_columns = ("pk", "name", "platform", "description", "config_ordered", "match_config")
+        fields = ("pk", "name")
+        default_columns = ("pk", "name")
+
+
+class ComplianceRuleTable(BaseTable):
+    """Table to display Compliance Rules."""
+
+    pk = ToggleColumn()
+    feature = LinkColumn("plugins:nautobot_golden_config:compliancerule_edit", args=[A("pk")])
+    match_config = TemplateColumn(template_code=MATCH_CONFIG)
+
+    class Meta(BaseTable.Meta):
+        """Table to display Compliance Rules Meta Data."""
+
+        model = models.ComplianceRule
+        fields = ("pk", "feature", "platform", "description", "config_ordered", "match_config", "config_type")
+        default_columns = ("pk", "feature", "platform", "description", "config_ordered", "match_config", "config_type")
 
 
 class ConfigRemoveTable(BaseTable):
-    """Table to display Compliance Features."""
+    """Table to display Compliance Rules."""
 
     pk = ToggleColumn()
     name = LinkColumn("plugins:nautobot_golden_config:configremove_edit", args=[A("pk")])
 
     class Meta(BaseTable.Meta):
-        """Table to display Compliance Features Meta Data."""
+        """Table to display Compliance Rules Meta Data."""
 
         model = models.ConfigRemove
         fields = ("pk", "name", "platform", "description", "regex_line")
@@ -275,13 +293,13 @@ class ConfigRemoveTable(BaseTable):
 
 
 class ConfigReplaceTable(BaseTable):
-    """Table to display Compliance Features."""
+    """Table to display Compliance Rules."""
 
     pk = ToggleColumn()
     name = LinkColumn("plugins:nautobot_golden_config:configreplace_edit", args=[A("pk")])
 
     class Meta(BaseTable.Meta):
-        """Table to display Compliance Features Meta Data."""
+        """Table to display Compliance Rules Meta Data."""
 
         model = models.ConfigReplace
         fields = ("pk", "name", "platform", "description", "substitute_text", "replaced_text")

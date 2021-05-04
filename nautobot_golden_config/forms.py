@@ -16,6 +16,7 @@ from nautobot.utilities.forms import BootstrapMixin, DynamicModelMultipleChoiceF
 
 from .models import (
     ConfigCompliance,
+    ComplianceRule,
     ComplianceFeature,
     GoldenConfigSettings,
     GoldenConfiguration,
@@ -25,7 +26,7 @@ from .models import (
 
 
 class SettingsFeatureFilterForm(BootstrapMixin, forms.Form):
-    """Form for ComplianceFeature instances."""
+    """Form for ComplianceRule instances."""
 
     platform = DynamicModelChoiceField(queryset=Platform.objects.all(), required=False)
     name = forms.CharField(required=False)
@@ -126,6 +127,31 @@ class ConfigComplianceFilterForm(GoldenConfigurationFilterForm):
     )
 
 
+class ComplianceRuleFilterForm(SettingsFeatureFilterForm):
+    """Form for ComplianceRule instances."""
+
+    model = ComplianceRule
+
+
+class ComplianceRuleForm(BootstrapMixin, forms.ModelForm):
+    """Filter Form for ComplianceRule instances."""
+
+    platform = DynamicModelChoiceField(queryset=Platform.objects.all())
+
+    class Meta:
+        """Boilerplate form Meta data for compliance rule."""
+
+        model = ComplianceRule
+        fields = (
+            "platform",
+            "feature",
+            "description",
+            "config_ordered",
+            "match_config",
+            "config_type",
+        )
+
+
 class ComplianceFeatureFilterForm(SettingsFeatureFilterForm):
     """Form for ComplianceFeature instances."""
 
@@ -135,20 +161,11 @@ class ComplianceFeatureFilterForm(SettingsFeatureFilterForm):
 class ComplianceFeatureForm(BootstrapMixin, forms.ModelForm):
     """Filter Form for ComplianceFeature instances."""
 
-    platform = DynamicModelChoiceField(queryset=Platform.objects.all())
-
     class Meta:
         """Boilerplate form Meta data for compliance feature."""
 
         model = ComplianceFeature
-        fields = (
-            "platform",
-            "name",
-            "description",
-            "config_ordered",
-            "match_config",
-            "config_type",
-        )
+        fields = ("name",)
 
 
 class GoldenConfigSettingsFeatureForm(BootstrapMixin, forms.ModelForm):

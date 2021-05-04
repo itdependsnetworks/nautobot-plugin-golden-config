@@ -15,7 +15,7 @@ from nautobot.dcim.models import Platform, Site, Device, Manufacturer, DeviceRol
 from nautobot_golden_config.models import (
     ConfigCompliance,
     GoldenConfiguration,
-    ComplianceFeature,
+    ComplianceRule,
     GoldenConfigSettings,
     ConfigRemove,
     ConfigReplace,
@@ -23,6 +23,7 @@ from nautobot_golden_config.models import (
 
 # Use the proper swappable User model
 User = get_user_model()
+
 
 @patch.object(ConfigCompliance.clean, True)
 class TestGraphQLQuery(TestCase):  # pylint: disable=too-many-instance-attributes
@@ -70,7 +71,7 @@ class TestGraphQLQuery(TestCase):  # pylint: disable=too-many-instance-attribute
             sot_agg_query="{test_model}",
         )
 
-        ComplianceFeature.objects.create(
+        ComplianceRule.objects.create(
             name="aaa",
             platform=self.platform1,
             description="Test Desc",
@@ -180,11 +181,11 @@ class TestGraphQLQuery(TestCase):  # pylint: disable=too-many-instance-attribute
         self.assertEqual(result.data, response_data)
         self.assertEqual(len(result.data["golden_configurations"]), 1)
 
-    def test_query_compliance_feature(self):
+    def test_query_compliance_rule(self):
         """Test Configuration Compliance Details Model."""
         query = """
             query {
-                compliance_features {
+                compliance_rules {
                     name
                     platform {
                         name
@@ -196,7 +197,7 @@ class TestGraphQLQuery(TestCase):  # pylint: disable=too-many-instance-attribute
             }
         """
         response_data = {
-            "compliance_features": [
+            "compliance_rules": [
                 {
                     "name": "test",
                     "platform": {"name": "Platform1"},
@@ -208,7 +209,7 @@ class TestGraphQLQuery(TestCase):  # pylint: disable=too-many-instance-attribute
         }
         result = self.execute_query(query)
         self.assertEqual(result.data, response_data)
-        self.assertEqual(len(result.data["compliance_features"]), 1)
+        self.assertEqual(len(result.data["compliance_rules"]), 1)
 
     def test_query_golden_config_settings(self):
         """Test GraphQL Golden Config Settings Model."""

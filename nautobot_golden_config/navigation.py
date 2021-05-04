@@ -23,13 +23,29 @@ if ENABLE_COMPLIANCE:
     )
     plugin_items.append(
         PluginMenuItem(
-            link="plugins:nautobot_golden_config:compliancefeature_list",
+            link="plugins:nautobot_golden_config:compliancerule_list",
             link_text="Compliance Rules",
+            permissions=["nautobot_golden_config.view_compliancerule"],
+            buttons=(
+                PluginMenuButton(
+                    link="plugins:nautobot_golden_config:compliancerule_add",
+                    title="Compliance Rules",
+                    icon_class="mdi mdi-plus-thick",
+                    color=ButtonColorChoices.GREEN,
+                    permissions=["nautobot_golden_config.add_compliancerule"],
+                ),
+            ),
+        )
+    )
+    plugin_items.append(
+        PluginMenuItem(
+            link="plugins:nautobot_golden_config:compliancefeature_list",
+            link_text="Compliance Features",
             permissions=["nautobot_golden_config.view_compliancefeature"],
             buttons=(
                 PluginMenuButton(
                     link="plugins:nautobot_golden_config:compliancefeature_add",
-                    title="Compliance Rules",
+                    title="Compliance Features",
                     icon_class="mdi mdi-plus-thick",
                     color=ButtonColorChoices.GREEN,
                     permissions=["nautobot_golden_config.add_compliancefeature"],
@@ -57,14 +73,14 @@ if ENABLE_COMPLIANCE:
         PluginMenuItem(
             link="plugins:nautobot_golden_config:configreplace_list",
             link_text="Line Replacements",
-            permissions=["nautobot_golden_config.view_compliancefeature"],
+            permissions=["nautobot_golden_config.view_compliancereplace"],
             buttons=(
                 PluginMenuButton(
                     link="plugins:nautobot_golden_config:configreplace_add",
                     title="Line Replacements",
                     icon_class="mdi mdi-plus-thick",
                     color=ButtonColorChoices.GREEN,
-                    permissions=["nautobot_golden_config.add_compliancefeature"],
+                    permissions=["nautobot_golden_config.add_compliancereplace"],
                 ),
             ),
         )
@@ -73,7 +89,7 @@ if ENABLE_COMPLIANCE:
         PluginMenuItem(
             link="plugins:nautobot_golden_config:goldenconfigsettings",
             link_text="Settings",
-            permissions=["nautobot_golden_config.view_compliancefeature"],
+            permissions=["nautobot_golden_config.view_compliancereplace"],
             buttons=(
                 PluginMenuButton(
                     link="plugins:nautobot_golden_config:goldenconfigsettings_edit",

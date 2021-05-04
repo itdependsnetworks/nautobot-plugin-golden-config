@@ -37,19 +37,46 @@ def null_to_empty(val):
     "webhooks",
 )
 class ComplianceFeature(PrimaryModel):
-    """Configuration compliance details."""
-    CLI = "cli"
-    JSON = "json"
-    _CHOICES = ( 
-        (CLI, 'CLI'),
-        (JSON, 'JSON'),
-    )
+    """Compliance feature details."""
 
     name = models.CharField(max_length=255, null=False, blank=False, validators=[validate_slug])
+
+    class Meta:
+        """Meta information for ComplianceRule model."""
+
+        ordering = ("name",)
+
+    def __str__(self):
+        """Return a sane string representation of the instance."""
+        return self.name
+
+    def get_absolute_url(self):  # pylint: disable=no-self-use
+        """Absolute url for the ComplianceRule instance."""
+        return reverse("plugins:nautobot_golden_config:compliancefeature_list")
+
+
+@extras_features(
+    "custom_fields",
+    "custom_validators",
+    "export_templates",
+    "graphql",
+    "webhooks",
+)
+class ComplianceRule(PrimaryModel):
+    """Configuration compliance details."""
+
+    CLI = "cli"
+    JSON = "json"
+    _CHOICES = (
+        (CLI, "CLI"),
+        (JSON, "JSON"),
+    )
+    feature = models.ForeignKey(to="ComplianceFeature", on_delete=models.CASCADE, blank=False, related_name="feature")
+
     platform = models.ForeignKey(
         to="dcim.Platform",
         on_delete=models.CASCADE,
-        related_name="compliance_features",
+        related_name="compliance_rules",
         null=False,
         blank=False,
     )
@@ -69,25 +96,29 @@ class ComplianceFeature(PrimaryModel):
         verbose_name="Config to Match",
         help_text="The config to match that is matched based on the parent most configuration. e.g. `router bgp` or `ntp`.",
     )
-    config_type = models.CharField(max_length=20, default=CLI, choices=_CHOICES, help_text="Whether the config is in cli or json/structured format.")
-
+    config_type = models.CharField(
+        max_length=20,
+        default=CLI,
+        choices=_CHOICES,
+        help_text="Whether the config is in cli or json/structured format.",
+    )
 
     class Meta:
-        """Meta information for ComplianceFeature model."""
+        """Meta information for ComplianceRule model."""
 
-        ordering = ("name", "platform")
+        ordering = ("platform", "feature__name")
         unique_together = (
-            "name",
+            "feature",
             "platform",
         )
 
     def __str__(self):
         """Return a sane string representation of the instance."""
-        return f"{self.platform} - {self.name}"
+        return f"{self.platform} - {self.feature.name}"
 
     def get_absolute_url(self):  # pylint: disable=no-self-use
-        """Absolute url for the ComplianceFeature instance."""
-        return reverse("plugins:nautobot_golden_config:compliancefeature_list")
+        """Absolute url for the ComplianceRule instance."""
+        return reverse("plugins:nautobot_golden_config:compliancerule_list")
 
     def clean(self):
         """Verify that if cli, then match_config is set."""
@@ -109,7 +140,7 @@ class ConfigCompliance(PrimaryModel):
     """Configuration compliance details."""
 
     device = models.ForeignKey(to="dcim.Device", on_delete=models.CASCADE, help_text="The device", blank=False)
-    feature = models.ForeignKey(to="ComplianceFeature", on_delete=models.CASCADE, blank=False, related_name="feature")
+    rule = models.ForeignKey(to="ComplianceRule", on_delete=models.CASCADE, blank=False, related_name="rule")
     compliance = models.BooleanField(null=True, blank=True)
     actual = models.TextField(blank=True, help_text="Actual Configuration for feature")
     intended = models.TextField(blank=True, help_text="Intended Configuration for feature")
@@ -125,7 +156,7 @@ class ConfigCompliance(PrimaryModel):
 
     def to_csv(self):
         """Indicates model fields to return as csv."""
-        return (self.device.name, self.feature.name, self.compliance)
+        return (self.device.name, self.rule.feature.name, self.compliance)
 
     def to_objectchange(self, action):
         """Remove actual and intended configuration from changelog."""
@@ -140,11 +171,11 @@ class ConfigCompliance(PrimaryModel):
         """Set unique together fields for model."""
 
         ordering = ["device"]
-        unique_together = ("device", "feature")
+        unique_together = ("device", "rule")
 
     def __str__(self):
         """String representation of a the compliance."""
-        return f"{self.device} -> {self.feature} -> {self.compliance}"
+        return f"{self.device} -> {self.rule} -> {self.compliance}"
 
     def save(self, *args, **kwargs):
         """Overloading save to call full_clean that invokes clean."""
@@ -153,7 +184,11 @@ class ConfigCompliance(PrimaryModel):
 
     def clean(self):
         """Perform that actual compliance check."""
-        feature = {"ordered": self.feature.config_ordered, "name": self.feature.name, "section": self.feature.match_config.splitlines()}
+        feature = {
+            "ordered": self.rule.config_ordered,
+            "name": self.rule.feature.name,
+            "section": self.rule.match_config.splitlines(),
+        }
         value = feature_compliance(feature, self.actual, self.intended, self.device.platform.slug)
         self.compliance = value["compliant"]
         self.ordered: value["ordered_compliant"]
@@ -344,7 +379,7 @@ class ConfigRemove(PrimaryModel):
     csv_headers = ["name", "platform", "description", "regex_line"]
 
     class Meta:
-        """Meta information for ComplianceFeature model."""
+        """Meta information for ComplianceRule model."""
 
         ordering = ("platform", "name")
         unique_together = ("name", "platform")
@@ -391,7 +426,7 @@ class ConfigReplace(PrimaryModel):
     csv_headers = ["name", "platform", "description", "substitute_text", "replaced_text"]
 
     class Meta:
-        """Meta information for ComplianceFeature model."""
+        """Meta information for ComplianceRule model."""
 
         ordering = ("platform", "name")
         unique_together = ("name", "platform")

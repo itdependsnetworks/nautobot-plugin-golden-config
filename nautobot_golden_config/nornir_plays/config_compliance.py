@@ -18,7 +18,7 @@ from nornir_nautobot.exceptions import NornirNautobotException
 from nautobot_plugin_nornir.plugins.inventory.nautobot_orm import NautobotORMInventory
 from nautobot_plugin_nornir.constants import NORNIR_SETTINGS
 
-from nautobot_golden_config.models import ComplianceFeature, ConfigCompliance, GoldenConfigSettings, GoldenConfiguration
+from nautobot_golden_config.models import ComplianceRule, ConfigCompliance, GoldenConfigSettings, GoldenConfiguration
 from nautobot_golden_config.utilities.helper import (
     get_allowed_os,
     get_dispatcher,
@@ -37,13 +37,11 @@ def get_features():
     """A serializer of sorts to return feature mappings as a dictionary."""
     # TODO: Review if creating a proper serializer is the way to go.
     features = {}
-    for obj in ComplianceFeature.objects.all():
+    for obj in ComplianceRule.objects.all():
         platform = str(obj.platform.slug)
         if not features.get(platform):
             features[platform] = []
-        features[platform].append(
-            {"ordered": obj.config_ordered, "obj": obj, "section": obj.match_config.splitlines()}
-        )
+        features[platform].append({"ordered": obj.config_ordered, "obj": obj, "section": obj.match_config.splitlines()})
     return features
 
 
@@ -108,7 +106,7 @@ def run_compliance(  # pylint: disable=too-many-arguments,too-many-locals
         # using update_or_create() method to conveniently update actual obj or create new one.
         ConfigCompliance.objects.update_or_create(
             device=obj,
-            feature=feature["obj"],
+            rule=feature["obj"],
             actual=section_config(feature, backup_cfg, platform),
             intended=section_config(feature, intended_cfg, platform),
         )

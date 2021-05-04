@@ -91,17 +91,22 @@ class ConfigComplianceListView(generic.ObjectListView):
         # features, however this may or may not be desirable in the future. To modify, change to
         # self.queryset.values_list()
         return (
-            self.queryset.filter(get_allowed_os_from_nested()).annotate(
+            self.queryset.filter(get_allowed_os_from_nested())
+            .annotate(
                 **{
-                    models.ComplianceFeature.objects.get(pk=feature_uuid).name: 
-                       Subquery(self.queryset.filter(device=OuterRef("device_id"), feature=models.ComplianceFeature.objects.get(pk=feature_uuid)).values("compliance"))
-                    for feature_uuid in models.ConfigCompliance.objects.values_list("feature", flat=True)
+                    models.ComplianceRule.objects.get(pk=rule_uuid).feature.name: Subquery(
+                        self.queryset.filter(
+                            device=OuterRef("device_id"), rule=models.ComplianceRule.objects.get(pk=rule_uuid)
+                        ).values("compliance")
+                    )
+                    for rule_uuid in models.ConfigCompliance.objects.values_list("rule", flat=True)
                     .distinct()
-                    .order_by("feature__name")
+                    .order_by("rule__feature__name")
                 }
             )
             .distinct(
-                *list(models.ConfigCompliance.objects.values_list("feature__name", flat=True).distinct()) + ["device__name"]
+                *list(models.ConfigCompliance.objects.values_list("rule__feature__name", flat=True).distinct())
+                + ["device__name"]
             )
             .order_by("device__name")
         )
@@ -346,7 +351,7 @@ class ConfigComplianceOverviewOverviewHelper(ContentTypePermissionRequiredMixin,
     @staticmethod
     def plot_barchart_visual(qs):  # pylint: disable=too-many-locals
         """Construct report visual from queryset."""
-        labels = [item["feature"] for item in qs]
+        labels = [item["rule"] for item in qs]
 
         compliant = [item["compliant"] for item in qs]
         non_compliant = [item["non_compliant"] for item in qs]
@@ -422,11 +427,11 @@ class ConfigComplianceOverview(generic.ObjectListView):
     template_name = "nautobot_golden_config/compliance_overview_report.html"
     kind = "Features"
     queryset = (
-        models.ConfigCompliance.objects.values("feature")
+        models.ConfigCompliance.objects.values("rule")
         .annotate(
-            count=Count("feature"),
-            compliant=Count("feature", filter=Q(compliance=True)),
-            non_compliant=Count("feature", filter=~Q(compliance=True)),
+            count=Count("rule"),
+            compliant=Count("rule", filter=Q(compliance=True)),
+            non_compliant=Count("rule", filter=~Q(compliance=True)),
             comp_percent=ExpressionWrapper(100 * F("compliant") / F("count"), output_field=FloatField()),
         )
         .order_by("-comp_percent")
@@ -466,7 +471,7 @@ class ConfigComplianceOverview(generic.ObjectListView):
                 .aggregate(total=Count("device", distinct=True), compliants=Count("compliant", filter=Q(compliant=0)))
             )
             feature_aggr = self.filterset(request.GET, main_qs).qs.aggregate(
-                total=Count("feature"), compliants=Count("feature", filter=Q(compliance=True))
+                total=Count("rule"), compliants=Count("rule", filter=Q(compliance=True))
             )
 
         return (
@@ -505,7 +510,7 @@ class ConfigComplianceOverview(generic.ObjectListView):
         )
         csv_data.append(",".join([]))
 
-        qs = self.queryset.values("feature", "count", "compliant", "non_compliant", "comp_percent")
+        qs = self.queryset.values("rule", "count", "compliant", "non_compliant", "comp_percent")
         csv_data.append(",".join(["Total" if item == "count" else item.capitalize() for item in qs[0].keys()]))
         for obj in qs:
             csv_data.append(
@@ -525,33 +530,68 @@ class ConfigComplianceOverview(generic.ObjectListView):
 
 
 class ComplianceFeatureListView(generic.ObjectListView):
-    """View for managing the config compliance feature definition."""
+    """View for managing the config compliance rule definition."""
 
     table = tables.ComplianceFeatureTable
     filterset = filters.ComplianceFeatureFilter
     filterset_form = forms.ComplianceFeatureFilterForm
-    queryset = models.ComplianceFeature.objects.all().order_by("platform", "name")
+    queryset = models.ComplianceFeature.objects.all()
     template_name = "nautobot_golden_config/compliance_features.html"
 
 
 class ComplianceFeatureEditView(generic.ObjectEditView):
-    """View for managing compliance features."""
+    """View for managing compliance rules."""
 
     queryset = models.ComplianceFeature.objects.all()
     model_form = forms.ComplianceFeatureForm
 
 
 class ComplianceFeatureDeleteView(generic.ObjectDeleteView):
-    """View for deleting compliance features."""
+    """View for deleting compliance rules."""
 
     queryset = models.ComplianceFeature.objects.all()
 
 
 class ComplianceFeatureBulkDeleteView(generic.BulkDeleteView):
-    """View for bulk deleting compliance features."""
+    """View for bulk deleting compliance rules."""
 
     queryset = models.ComplianceFeature.objects.all()
     table = tables.ComplianceFeatureTable
+
+
+#
+# ComplianceRule
+#
+
+
+class ComplianceRuleListView(generic.ObjectListView):
+    """View for managing the config compliance rule definition."""
+
+    table = tables.ComplianceRuleTable
+    filterset = filters.ComplianceRuleFilter
+    filterset_form = forms.ComplianceRuleFilterForm
+    queryset = models.ComplianceRule.objects.all()
+    template_name = "nautobot_golden_config/compliance_rules.html"
+
+
+class ComplianceRuleEditView(generic.ObjectEditView):
+    """View for managing compliance rules."""
+
+    queryset = models.ComplianceRule.objects.all()
+    model_form = forms.ComplianceRuleForm
+
+
+class ComplianceRuleDeleteView(generic.ObjectDeleteView):
+    """View for deleting compliance rules."""
+
+    queryset = models.ComplianceRule.objects.all()
+
+
+class ComplianceRuleBulkDeleteView(generic.BulkDeleteView):
+    """View for bulk deleting compliance rules."""
+
+    queryset = models.ComplianceRule.objects.all()
+    table = tables.ComplianceRuleTable
 
 
 #
@@ -604,7 +644,7 @@ class ConfigRemoveListView(generic.ObjectListView):
 
     queryset = models.ConfigRemove.objects.all()
     table = tables.ConfigRemoveTable
-    filterset = filters.ComplianceFeatureFilter
+    filterset = filters.ComplianceRuleFilter
     filterset_form = forms.ConfigRemoveFeatureFilterForm
 
 
@@ -659,7 +699,7 @@ class ConfigReplaceListView(generic.ObjectListView):
 
     queryset = models.ConfigReplace.objects.all()
     table = tables.ConfigReplaceTable
-    filterset = filters.ComplianceFeatureFilter
+    filterset = filters.ComplianceRuleFilter
     filterset_form = forms.ConfigReplaceFeatureFilterForm
 
 
