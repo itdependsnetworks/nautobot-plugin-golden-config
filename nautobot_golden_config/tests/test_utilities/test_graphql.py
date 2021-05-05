@@ -3,8 +3,8 @@
 from unittest.mock import patch
 
 from nautobot.utilities.testing import TestCase
-from nautobot_golden_config.utilities.graphql import graph_ql_query
 from nautobot.dcim.models import Device
+from nautobot_golden_config.utilities.graphql import graph_ql_query
 
 # pylint: disable=no-self-use
 

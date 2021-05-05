@@ -1,7 +1,6 @@
 """Django Models for tracking the configuration compliance per feature and device."""
 
 import logging
-import json
 
 from django.db import models
 from django.core.exceptions import ValidationError

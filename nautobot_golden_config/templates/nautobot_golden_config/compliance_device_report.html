@@ -88,11 +88,11 @@
 {% endblock %}
 {% for item in compliance_details %}
     <div id="{{ item.rule }}" class="panel panel-default" style="width:100%">
-        <div class="panel-heading"><strong>{{ item.rule|upper }}</strong></div>
+        <div class="panel-heading"><strong>{{ item.rule.feature.name|upper }}</strong></div>
         <table id="content">
         <tr>
             <td style="width:250px">Status</td>
-            {% if item.ordered %}
+            {% if item.rule.config_ordered %}
                 {% if item.compliance %}
                     <td><span class="label label-success">Compliant</span> <span><i class="mdi mdi-sort" title="Ordered Configuration Test"></i></span></td>
                 {% else %}
@@ -107,7 +107,7 @@
             {% endif %}
 
         </tr>
-        {% if item.compliance and not item.ordered %}
+        {% if item.compliance and not item.rule.config_ordered %}
             <tr>
                 <td style="width:250px">Intended Configuration</td>
                 <td class="config_hover">

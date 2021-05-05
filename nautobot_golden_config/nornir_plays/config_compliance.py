@@ -11,7 +11,6 @@ from nornir import InitNornir
 from nornir.core.plugins.inventory import InventoryPluginRegister
 from nornir.core.task import Result, Task
 
-from nornir_nautobot.plugins.tasks.dispatcher import dispatcher
 from nornir_nautobot.utils.logger import NornirLogger
 from nornir_nautobot.exceptions import NornirNautobotException
 
@@ -21,8 +20,6 @@ from nautobot_plugin_nornir.constants import NORNIR_SETTINGS
 from nautobot_golden_config.models import ComplianceRule, ConfigCompliance, GoldenConfigSettings, GoldenConfiguration
 from nautobot_golden_config.utilities.helper import (
     get_allowed_os,
-    get_dispatcher,
-    null_to_empty,
     verify_global_settings,
     check_jinja_template,
 )
@@ -99,10 +96,6 @@ def run_compliance(  # pylint: disable=too-many-arguments,too-many-locals
 
     # TODO: Make this atomic with compliance_obj step.
     for feature in features[obj.platform.slug]:
-        defaults = {
-            "actual": section_config(feature, backup_cfg, platform),
-            "intended": section_config(feature, intended_cfg, platform),
-        }
         # using update_or_create() method to conveniently update actual obj or create new one.
         ConfigCompliance.objects.update_or_create(
             device=obj,

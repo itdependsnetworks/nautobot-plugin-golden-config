@@ -1,5 +1,5 @@
 <div class="panel panel-default">
-{% if template_type == "device-compliance" %}
+    {% if template_type == "device-compliance" %}
     <div class="panel-heading">
         <a href="{% url 'plugins:nautobot_golden_config:configcompliance' pk=device.pk %}"><strong>Config Compliance Validation</strong></a>
     </div>
@@ -14,7 +14,7 @@
             <tbody>
             {% for item in compliance %}
                 <tr>
-                    <td>{{ item.name }}</td>
+                    <td>{{ item.rule__feature__name }}</td>
                     <td>
                     {% if item.compliance == False %}
                         <span class="label label-danger">Non-Compliant</span>
@@ -43,7 +43,7 @@
             <tbody>
             {% for item in compliance %}
                 <tr>
-                    <td>{{ item.name }}</td>
+                    <td>{{ item.rule__feature__name }}</td>
                     <td><span class="label label-danger">{{ item.non_compliant }}</span></td>
                     <td><span class="label label-success">{{ item.compliant }}</span></td>
                 </tr>

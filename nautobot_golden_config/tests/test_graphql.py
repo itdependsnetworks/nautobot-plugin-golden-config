@@ -8,7 +8,6 @@ from django.test.client import RequestFactory
 
 from graphql import get_default_backend
 from graphene_django.settings import graphene_settings
-from unittest.mock import patch
 
 from nautobot.dcim.models import Platform, Site, Device, Manufacturer, DeviceRole, DeviceType
 
@@ -25,7 +24,6 @@ from nautobot_golden_config.models import (
 User = get_user_model()
 
 
-@patch.object(ConfigCompliance.clean, True)
 class TestGraphQLQuery(TestCase):  # pylint: disable=too-many-instance-attributes
     """Test GraphQL Queries for Golden Config Plugin."""
 

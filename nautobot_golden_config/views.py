@@ -1,4 +1,5 @@
 """Django views for Nautobot Golden Configuration."""
+from datetime import datetime
 
 import base64
 import io
@@ -208,7 +209,7 @@ class ConfigComplianceView(ContentTypePermissionRequiredMixin, generic.View):
         """Manually set permission when not tied to a model for device report."""
         return "nautobot_golden_config.view_configcompliance"
 
-    def get(self, request, pk):
+    def get(self, request, pk):  # pylint: disable=invalid-name
         """Read request into a view of a single device."""
         device = Device.objects.get(pk=pk)
         compliance_details = models.ConfigCompliance.objects.filter(device=device)
@@ -229,7 +230,7 @@ class ComplianceDeviceFilteredReport(ContentTypePermissionRequiredMixin, generic
         """Manually set permission when not tied to a model for filtered report."""
         return "nautobot_golden_config.view_configcompliance"
 
-    def get(self, request, pk, compliance):
+    def get(self, request, pk, compliance):  # pylint: disable=invalid-name
         """Read request into a view of a single device."""
         device = Device.objects.get(pk=pk)
         compliance_details = models.ConfigCompliance.objects.filter(device=device)
@@ -254,7 +255,7 @@ class ConfigComplianceDetails(ContentTypePermissionRequiredMixin, generic.View):
         """Manually set permission when not tied to a model for config details."""
         return "nautobot_golden_config.view_goldenconfiguration"
 
-    def get(self, request, pk, config_type):
+    def get(self, request, pk, config_type):  # pylint: disable=invalid-name,too-many-branches
         """Read request into a view of a single device."""
         device = Device.objects.get(pk=pk)
         config_details = models.GoldenConfiguration.objects.filter(device=device).first()
@@ -267,8 +268,14 @@ class ConfigComplianceDetails(ContentTypePermissionRequiredMixin, generic.View):
             output = config_details.intended_config
         elif config_type == "compliance":
             output = config_details.compliance_config
-            backup_date = str(config_details.backup_last_success_date.strftime("%b %d %Y"))
-            intended_date = str(config_details.intended_last_success_date.strftime("%b %d %Y"))
+            if config_details.backup_last_success_date:
+                backup_date = str(config_details.backup_last_success_date.strftime("%b %d %Y"))
+            else:
+                backup_date = datetime.now().strftime("%b %d %Y")
+            if config_details.intended_last_success_date:
+                intended_date = str(config_details.intended_last_success_date.strftime("%b %d %Y"))
+            else:
+                intended_date = datetime.now().strftime("%b %d %Y")
             first_occurence = output.index("@@")
             second_occurence = output.index("@@", first_occurence)
             # This is logic to match diff2html's expected input.
@@ -428,11 +435,11 @@ class ConfigComplianceOverview(generic.ObjectListView):
     template_name = "nautobot_golden_config/compliance_overview_report.html"
     kind = "Features"
     queryset = (
-        models.ConfigCompliance.objects.values("rule")
+        models.ConfigCompliance.objects.values("rule__feature__name")
         .annotate(
-            count=Count("rule"),
-            compliant=Count("rule", filter=Q(compliance=True)),
-            non_compliant=Count("rule", filter=~Q(compliance=True)),
+            count=Count("rule__feature__name"),
+            compliant=Count("rule__feature__name", filter=Q(compliance=True)),
+            non_compliant=Count("rule__feature__name", filter=~Q(compliance=True)),
             comp_percent=ExpressionWrapper(100 * F("compliant") / F("count"), output_field=FloatField()),
         )
         .order_by("-comp_percent")

@@ -50,12 +50,13 @@ class ConfigComplianceSiteCheck(PluginTemplateExtension):  # pylint: disable=abs
             .filter(get_allowed_os_from_nested())
             .filter(device__site__slug=self.get_site_slug().slug)
             .annotate(
-                compliant=Count("rule", filter=Q(compliance=True)),
-                non_compliant=Count("rule", filter=~Q(compliance=True)),
+                count=Count("rule__feature__name"),
+                compliant=Count("rule__feature__name", filter=Q(compliance=True)),
+                non_compliant=Count("rule__feature__name", filter=~Q(compliance=True)),
             )
+            .order_by("rule__feature__name")
             .values("rule__feature__name", "compliant", "non_compliant")
         )
-
         extra_context = {"compliance": comp_obj, "template_type": "site"}
         return self.render(
             "nautobot_golden_config/content_template.html",
