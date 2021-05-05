@@ -359,7 +359,7 @@ class ConfigComplianceOverviewOverviewHelper(ContentTypePermissionRequiredMixin,
     @staticmethod
     def plot_barchart_visual(qs):  # pylint: disable=too-many-locals
         """Construct report visual from queryset."""
-        labels = [item["rule"] for item in qs]
+        labels = [item["rule__feature__name"] for item in qs]
 
         compliant = [item["compliant"] for item in qs]
         non_compliant = [item["non_compliant"] for item in qs]
