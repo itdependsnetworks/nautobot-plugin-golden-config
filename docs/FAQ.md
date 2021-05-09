@@ -11,8 +11,8 @@ Instead, it is up to the operator to ensure their configurations match exactly a
 
 _Why doesn't the config overview page reflect the inclusion changes immediately?_
 
-On a technical level, those changes enable the model `GoldenConfiguration` to *not* filter out the newly included devices, but this does not add to the
-model. In order to be included, a new job needs to be ran which will create an entry within `GoldenConfiguration`, any of the 3 jobs that successfully run
+On a technical level, those changes enable the model `GoldenConfig` to *not* filter out the newly included devices, but this does not add to the
+model. In order to be included, a new job needs to be ran which will create an entry within `GoldenConfig`, any of the 3 jobs that successfully run
 will create such an entry.
 
 _Why aren't configurations generated or compliance generated real time?_

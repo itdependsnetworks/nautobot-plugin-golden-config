@@ -2,8 +2,8 @@
 from django.db.models import Count, Q
 from nautobot.extras.plugins import PluginTemplateExtension
 
-from .models import ConfigCompliance, GoldenConfiguration
-from .utilities.constant import ENABLE_COMPLIANCE, CONFIG_FEATURES
+from nautobot_golden_config.models import ConfigCompliance, GoldenConfig
+from nautobot_golden_config.utilities.constant import ENABLE_COMPLIANCE, CONFIG_FEATURES
 
 
 class ConfigComplianceDeviceCheck(PluginTemplateExtension):  # pylint: disable=abstract-method
@@ -69,7 +69,7 @@ class ConfigDeviceDetails(PluginTemplateExtension):  # pylint: disable=abstract-
 
     def right_page(self):
         """Content to add to the configuration compliance."""
-        golden_config = GoldenConfiguration.objects.filter(device=self.get_device()).first()
+        golden_config = GoldenConfig.objects.filter(device=self.get_device()).first()
         extra_context = {
             "device": self.get_device(),  # device,
             "golden_config": golden_config,

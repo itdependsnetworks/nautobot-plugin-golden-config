@@ -20,12 +20,12 @@ from nautobot_golden_config.utilities.helper import (
     check_jinja_template,
 )
 from nautobot_golden_config.models import (
-    GoldenConfigSettings,
-    GoldenConfiguration,
+    GoldenConfigSetting,
+    GoldenConfig,
     ConfigRemove,
     ConfigReplace,
 )
-from .processor import ProcessGoldenConfig
+from nautobot_golden_config.nornir_plays.processor import ProcessGoldenConfig
 
 InventoryPluginRegister.register("nautobot-inventory", NautobotORMInventory)
 
@@ -45,9 +45,9 @@ def run_backup(  # pylint: disable=too-many-arguments
     """
     obj = task.host.data["obj"]
 
-    backup_obj = GoldenConfiguration.objects.filter(device=obj).first()
+    backup_obj = GoldenConfig.objects.filter(device=obj).first()
     if not backup_obj:
-        backup_obj = GoldenConfiguration.objects.create(
+        backup_obj = GoldenConfig.objects.create(
             device=obj,
         )
     backup_obj.backup_last_attempt_date = task.host.defaults.data["now"]
@@ -89,7 +89,7 @@ def config_backup(job_result, data, backup_root_folder):
     """Nornir play to backup configurations."""
     now = datetime.now()
     logger = NornirLogger(__name__, job_result, data.get("debug"))
-    global_settings = GoldenConfigSettings.objects.first()
+    global_settings = GoldenConfigSetting.objects.first()
     verify_global_settings(logger, global_settings, ["backup_path_template", "intended_path_template"])
 
     # Build a dictionary, with keys of platform.slug, and the regex line in it for the netutils func.
@@ -97,14 +97,14 @@ def config_backup(job_result, data, backup_root_folder):
     for regex in ConfigRemove.objects.all():
         if not remove_regex_dict.get(regex.platform.slug):
             remove_regex_dict[regex.platform.slug] = []
-        remove_regex_dict[regex.platform.slug].append({"regex": regex.regex_line})
+        remove_regex_dict[regex.platform.slug].append({"regex": regex.regex})
 
     # Build a dictionary, with keys of platform.slug, and the regex and replace keys for the netutils func.
     replace_regex_dict = {}
     for regex in ConfigReplace.objects.all():
         if not replace_regex_dict.get(regex.platform.slug):
             replace_regex_dict[regex.platform.slug] = []
-        replace_regex_dict[regex.platform.slug].append({"replace": regex.replaced_text, "regex": regex.substitute_text})
+        replace_regex_dict[regex.platform.slug].append({"replace": regex.replace, "regex": regex.regex})
     nornir_obj = InitNornir(
         runner=NORNIR_SETTINGS.get("runner"),
         logging={"enabled": False},

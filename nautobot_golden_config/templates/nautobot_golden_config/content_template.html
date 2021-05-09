@@ -69,7 +69,7 @@
                 <tr>
                     <td>Compliance</td>
                     <td>
-                        <a href={% url 'plugins:nautobot_golden_config:configcompliance_details' pk=device.pk config_type='compliance' %} <i class="mdi mdi-file-compare"></i></a>
+                        <a href="{% url 'plugins:nautobot_golden_config:configcompliance_details' pk=device.pk config_type='compliance' %}"><i class="mdi mdi-file-compare"></i></a>
                     </td>
                 </tr>
             {% endif %}
@@ -77,7 +77,7 @@
                 <tr>
                     <td>Intended</td>
                     <td>
-                        <a href={% url 'plugins:nautobot_golden_config:configcompliance_details' pk=device.pk config_type='intended' %} <i class="mdi mdi-text-box-check-outline"></i></a>
+                        <a href="{% url 'plugins:nautobot_golden_config:configcompliance_details' pk=device.pk config_type='intended' %}"><i class="mdi mdi-text-box-check-outline"></i></a>
                     </td>
                 </tr>
             {% endif %}
@@ -85,7 +85,7 @@
                 <tr>
                     <td>Actual</td>
                     <td>
-                        <a href={% url 'plugins:nautobot_golden_config:configcompliance_details' pk=device.pk config_type='backup' %} <i class="mdi mdi-file-document-outline"></i></a>
+                        <a href="{% url 'plugins:nautobot_golden_config:configcompliance_details' pk=device.pk config_type='backup' %}"><i class="mdi mdi-file-document-outline"></i></a>
                     </td>
                 </tr>
             {% endif %}
@@ -93,7 +93,7 @@
                 <tr>
                     <td>SoT Aggregation Data</td>
                     <td>
-                        <a href={% url 'plugins:nautobot_golden_config:configcompliance_details' pk=device.pk config_type='sotagg' %} <i class="mdi mdi-code-json"></i></a>
+                        <a href="{% url 'plugins:nautobot_golden_config:configcompliance_details' pk=device.pk config_type='sotagg' %}"><i class="mdi mdi-code-json"></i></a>
                     </td>
                 </tr>
             {% endif %}

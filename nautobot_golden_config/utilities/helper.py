@@ -42,7 +42,7 @@ def get_job_filter(data=None):
     elif data.get("device"):
         query.update({"id": data["device"].values_list("pk", flat=True)})
 
-    base_qs = models.GoldenConfigSettings.objects.first().get_queryset()
+    base_qs = models.GoldenConfigSetting.objects.first().get_queryset()
     return DeviceFilterSet(data=query, queryset=base_qs).qs
 
 

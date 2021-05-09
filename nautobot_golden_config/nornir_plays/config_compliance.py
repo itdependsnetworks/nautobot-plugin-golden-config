@@ -17,13 +17,13 @@ from nornir_nautobot.exceptions import NornirNautobotException
 from nautobot_plugin_nornir.plugins.inventory.nautobot_orm import NautobotORMInventory
 from nautobot_plugin_nornir.constants import NORNIR_SETTINGS
 
-from nautobot_golden_config.models import ComplianceRule, ConfigCompliance, GoldenConfigSettings, GoldenConfiguration
+from nautobot_golden_config.models import ComplianceRule, ConfigCompliance, GoldenConfigSetting, GoldenConfig
 from nautobot_golden_config.utilities.helper import (
     get_job_filter,
     verify_global_settings,
     check_jinja_template,
 )
-from .processor import ProcessGoldenConfig
+from nautobot_golden_config.nornir_plays.processor import ProcessGoldenConfig
 
 
 InventoryPluginRegister.register("nautobot-inventory", NautobotORMInventory)
@@ -69,9 +69,9 @@ def run_compliance(  # pylint: disable=too-many-arguments,too-many-locals
     """
     obj = task.host.data["obj"]
 
-    compliance_obj = GoldenConfiguration.objects.filter(device=obj).first()
+    compliance_obj = GoldenConfig.objects.filter(device=obj).first()
     if not compliance_obj:
-        compliance_obj = GoldenConfiguration.objects.create(device=obj)
+        compliance_obj = GoldenConfig.objects.create(device=obj)
     compliance_obj.compliance_last_attempt_date = task.host.defaults.data["now"]
     compliance_obj.save()
 
@@ -117,7 +117,7 @@ def config_compliance(job_result, data, backup_root_path, intended_root_folder):
     now = datetime.now()
     features = get_features()
     logger = NornirLogger(__name__, job_result, data.get("debug"))
-    global_settings = GoldenConfigSettings.objects.first()
+    global_settings = GoldenConfigSetting.objects.first()
     verify_global_settings(logger, global_settings, ["backup_path_template", "intended_path_template"])
     nornir_obj = InitNornir(
         runner=NORNIR_SETTINGS.get("runner"),

@@ -13,9 +13,9 @@ from nautobot.dcim.models import Platform, Site, Device, Manufacturer, DeviceRol
 
 from nautobot_golden_config.models import (
     ConfigCompliance,
-    GoldenConfiguration,
+    GoldenConfig,
     ComplianceRule,
-    GoldenConfigSettings,
+    GoldenConfigSetting,
     ConfigRemove,
     ConfigReplace,
 )
@@ -60,7 +60,7 @@ class TestGraphQLQuery(TestCase):  # pylint: disable=too-many-instance-attribute
             comments="First Device",
         )
 
-        GoldenConfigSettings.objects.update(
+        GoldenConfigSetting.objects.update(
             backup_path_template="test/backup",
             intended_path_template="test/intended",
             jinja_path_template="{{jinja_path}}",
@@ -88,7 +88,7 @@ class TestGraphQLQuery(TestCase):  # pylint: disable=too-many-instance-attribute
             ordered=False,
         )
 
-        GoldenConfiguration.objects.create(
+        GoldenConfig.objects.create(
             device=self.device1,
             backup_config="interface Eth1/1\ndescription test",
             intended_config="interface Ethernet1/1\ndescription test",
@@ -96,15 +96,15 @@ class TestGraphQLQuery(TestCase):  # pylint: disable=too-many-instance-attribute
         )
 
         ConfigRemove.objects.create(
-            name="Test Removal", platform=self.platform1, description="Test Desc", regex_line="^.Test.*"
+            name="Test Removal", platform=self.platform1, description="Test Desc", regex="^.Test.*"
         )
 
         ConfigReplace.objects.create(
             name="Test Replace",
             platform=self.platform1,
             description="Test Desc",
-            substitute_text="username\\s+(\\S+)",
-            replaced_text="<redacted>",
+            regex="username\\s+(\\S+)",
+            replace="<redacted>",
         )
 
     def execute_query(self, query, variables=None):
@@ -154,7 +154,7 @@ class TestGraphQLQuery(TestCase):  # pylint: disable=too-many-instance-attribute
         """Test Configuration management Model."""
         query = """
             query {
-                golden_configurations {
+                golden_configs {
                     device {
                         name
                     }
@@ -166,7 +166,7 @@ class TestGraphQLQuery(TestCase):  # pylint: disable=too-many-instance-attribute
         """
         # Need to figure out how to execute a mock Job.
         response_data = {
-            "golden_configurations": [
+            "golden_configs": [
                 {
                     "device": {"name": "Device 1"},
                     "backup_config": "interface Eth1/1\ndescription test",
@@ -177,7 +177,7 @@ class TestGraphQLQuery(TestCase):  # pylint: disable=too-many-instance-attribute
         }
         result = self.execute_query(query)
         self.assertEqual(result.data, response_data)
-        self.assertEqual(len(result.data["golden_configurations"]), 1)
+        self.assertEqual(len(result.data["golden_configs"]), 1)
 
     def test_query_compliance_rule(self):
         """Test Configuration Compliance Details Model."""
@@ -209,11 +209,11 @@ class TestGraphQLQuery(TestCase):  # pylint: disable=too-many-instance-attribute
         self.assertEqual(result.data, response_data)
         self.assertEqual(len(result.data["compliance_rules"]), 1)
 
-    def test_query_golden_config_settings(self):
+    def test_query_golden_config_setting(self):
         """Test GraphQL Golden Config Settings Model."""
         query = """
             query {
-                golden_config_settingss {
+                golden_config_settings {
                     backup_path_template
                     intended_path_template
                     jinja_path_template
@@ -224,7 +224,7 @@ class TestGraphQLQuery(TestCase):  # pylint: disable=too-many-instance-attribute
             }
         """
         response_data = {
-            "golden_config_settingss": [
+            "golden_config_settings": [
                 {
                     "backup_path_template": "test/backup",
                     "intended_path_template": "test/intended",
@@ -237,7 +237,7 @@ class TestGraphQLQuery(TestCase):  # pylint: disable=too-many-instance-attribute
         }
         result = self.execute_query(query)
         self.assertEqual(result.data, response_data)
-        self.assertEqual(len(result.data["golden_config_settingss"]), 1)
+        self.assertEqual(len(result.data["golden_config_settings"]), 1)
 
     def test_query_line_removal(self):
         """Test Regex Line Removal."""
@@ -249,7 +249,7 @@ class TestGraphQLQuery(TestCase):  # pylint: disable=too-many-instance-attribute
                         name
                     }
                     description
-                    regex_line
+                    regex
                 }
             }
         """
@@ -260,7 +260,7 @@ class TestGraphQLQuery(TestCase):  # pylint: disable=too-many-instance-attribute
                     "name": "Test Removal",
                     "platform": {"name": "Platform1"},
                     "description": "Test Desc",
-                    "regex_line": "^.Test.*",
+                    "regex": "^.Test.*",
                 }
             ]
         }
@@ -278,8 +278,8 @@ class TestGraphQLQuery(TestCase):  # pylint: disable=too-many-instance-attribute
                         name
                     }
                     description
-                    substitute_text
-                    replaced_text
+                    regex
+                    replace
                 }
             }
         """
@@ -290,8 +290,8 @@ class TestGraphQLQuery(TestCase):  # pylint: disable=too-many-instance-attribute
                     "name": "Test Replace",
                     "platform": {"name": "Platform1"},
                     "description": "Test Desc",
-                    "substitute_text": "username\\s+(\\S+)",
-                    "replaced_text": "<redacted>",
+                    "regex": "username\\s+(\\S+)",
+                    "replace": "<redacted>",
                 }
             ]
         }

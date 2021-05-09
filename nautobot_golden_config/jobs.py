@@ -11,11 +11,11 @@ from nautobot.extras.models.datasources import GitRepository
 from nautobot.dcim.models import Device, DeviceRole, DeviceType, Manufacturer, Site, Platform, Region, Rack, RackGroup
 from nautobot.tenancy.models import Tenant, TenantGroup
 
-from .utilities.git import GitRepo
-from .nornir_plays.config_intended import config_intended
-from .nornir_plays.config_backup import config_backup
-from .nornir_plays.config_compliance import config_compliance
-from .utilities.constant import ENABLE_BACKUP, ENABLE_COMPLIANCE, ENABLE_INTENDED
+from nautobot_golden_config.utilities.git import GitRepo
+from nautobot_golden_config.nornir_plays.config_intended import config_intended
+from nautobot_golden_config.nornir_plays.config_backup import config_backup
+from nautobot_golden_config.nornir_plays.config_compliance import config_compliance
+from nautobot_golden_config.utilities.constant import ENABLE_BACKUP, ENABLE_COMPLIANCE, ENABLE_INTENDED
 
 LOGGER = logging.getLogger(__name__)
 

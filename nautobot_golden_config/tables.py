@@ -144,7 +144,7 @@ class ComplianceColumn(Column):
 # Tables
 #
 
-
+# ConfigCompliance
 class ConfigComplianceTable(BaseTable):
     """Table for rendering a listing of Device entries and their associated ConfigCompliance record status."""
 
@@ -221,7 +221,10 @@ class ConfigComplianceDeleteTable(BaseTable):
         fields = ("device", "feature", "compliance")
 
 
-class GoldenConfigurationTable(BaseTable):
+# GoldenConfig
+
+
+class GoldenConfigTable(BaseTable):
     """Table to display Config Management Status."""
 
     pk = ToggleColumn()
@@ -245,15 +248,18 @@ class GoldenConfigurationTable(BaseTable):
     class Meta(BaseTable.Meta):
         """Meta for class CircuitMaintenanceTable."""
 
-        model = models.GoldenConfiguration
+        model = models.GoldenConfig
         fields = actual_fields()
+
+
+# ComplianceFeature
 
 
 class ComplianceFeatureTable(BaseTable):
     """Table to display Compliance Features."""
 
     pk = ToggleColumn()
-    feature = LinkColumn("plugins:nautobot_golden_config:compliancefeature_edit", args=[A("pk")])
+    name = LinkColumn("plugins:nautobot_golden_config:compliancefeature", args=[A("pk")])
 
     class Meta(BaseTable.Meta):
         """Table to display Compliance Features Meta Data."""
@@ -263,11 +269,14 @@ class ComplianceFeatureTable(BaseTable):
         default_columns = ("pk", "name", "slug", "description")
 
 
+# ComplianceRule
+
+
 class ComplianceRuleTable(BaseTable):
     """Table to display Compliance Rules."""
 
     pk = ToggleColumn()
-    feature = LinkColumn("plugins:nautobot_golden_config:compliancerule_edit", args=[A("pk")])
+    feature = LinkColumn("plugins:nautobot_golden_config:compliancerule", args=[A("pk")])
     match_config = TemplateColumn(template_code=MATCH_CONFIG)
 
     class Meta(BaseTable.Meta):
@@ -278,29 +287,35 @@ class ComplianceRuleTable(BaseTable):
         default_columns = ("pk", "feature", "platform", "description", "config_ordered", "match_config", "config_type")
 
 
+# ConfigRemove
+
+
 class ConfigRemoveTable(BaseTable):
     """Table to display Compliance Rules."""
 
     pk = ToggleColumn()
-    name = LinkColumn("plugins:nautobot_golden_config:configremove_edit", args=[A("pk")])
+    name = LinkColumn("plugins:nautobot_golden_config:configremove", args=[A("pk")])
 
     class Meta(BaseTable.Meta):
         """Table to display Compliance Rules Meta Data."""
 
         model = models.ConfigRemove
-        fields = ("pk", "name", "platform", "description", "regex_line")
-        default_columns = ("pk", "name", "platform", "description", "regex_line")
+        fields = ("pk", "name", "platform", "description", "regex")
+        default_columns = ("pk", "name", "platform", "description", "regex")
+
+
+# ConfigReplace
 
 
 class ConfigReplaceTable(BaseTable):
     """Table to display Compliance Rules."""
 
     pk = ToggleColumn()
-    name = LinkColumn("plugins:nautobot_golden_config:configreplace_edit", args=[A("pk")])
+    name = LinkColumn("plugins:nautobot_golden_config:configreplace", args=[A("pk")])
 
     class Meta(BaseTable.Meta):
         """Table to display Compliance Rules Meta Data."""
 
         model = models.ConfigReplace
-        fields = ("pk", "name", "platform", "description", "substitute_text", "replaced_text")
-        default_columns = ("pk", "name", "platform", "description", "substitute_text", "replaced_text")
+        fields = ("pk", "name", "platform", "description", "regex", "replace")
+        default_columns = ("pk", "name", "platform", "description", "regex", "replace")

@@ -25,8 +25,8 @@ from nautobot.utilities.views import ContentTypePermissionRequiredMixin
 
 from nautobot_golden_config import filters, forms, models, tables
 
-from .utilities.constant import PLUGIN_CFG, ENABLE_COMPLIANCE, CONFIG_FEATURES
-from .utilities.graphql import graph_ql_query
+from nautobot_golden_config.utilities.constant import PLUGIN_CFG, ENABLE_COMPLIANCE, CONFIG_FEATURES
+from nautobot_golden_config.utilities.graphql import graph_ql_query
 
 LOGGER = logging.getLogger(__name__)
 
@@ -34,30 +34,30 @@ GREEN = "#D5E8D4"
 RED = "#F8CECC"
 
 #
-# GoldenConfiguration
+# GoldenConfig
 #
 
 
-class GoldenConfigurationListView(generic.ObjectListView):
+class GoldenConfigListView(generic.ObjectListView):
     """View for displaying the configuration management status for backup, intended, diff, and SoT Agg."""
 
-    table = tables.GoldenConfigurationTable
-    filterset = filters.GoldenConfigurationFilter
-    filterset_form = forms.GoldenConfigurationFilterForm
-    queryset = models.GoldenConfiguration.objects.all()
-    template_name = "nautobot_golden_config/goldenconfiguration_list.html"
+    table = tables.GoldenConfigTable
+    filterset = filters.GoldenConfigFilter
+    filterset_form = forms.GoldenConfigFilterForm
+    queryset = models.GoldenConfig.objects.all()
+    template_name = "nautobot_golden_config/goldenconfig_list.html"
 
     def extra_context(self):
         """Boilerplace code to modify data before returning."""
         return CONFIG_FEATURES
 
 
-class GoldenConfigurationBulkDeleteView(generic.BulkDeleteView):
+class GoldenConfigBulkDeleteView(generic.BulkDeleteView):
     """Standard view for bulk deletion of data."""
 
-    queryset = models.GoldenConfiguration.objects.all()
-    table = tables.GoldenConfigurationTable
-    filterset = filters.GoldenConfigurationFilter
+    queryset = models.GoldenConfig.objects.all()
+    table = tables.GoldenConfigTable
+    filterset = filters.GoldenConfigFilter
 
 
 #
@@ -237,12 +237,12 @@ class ConfigComplianceDetails(ContentTypePermissionRequiredMixin, generic.View):
 
     def get_required_permission(self):
         """Manually set permission when not tied to a model for config details."""
-        return "nautobot_golden_config.view_goldenconfiguration"
+        return "nautobot_golden_config.view_goldenconfig"
 
     def get(self, request, pk, config_type):  # pylint: disable=invalid-name,too-many-branches
         """Read request into a view of a single device."""
         device = Device.objects.get(pk=pk)
-        config_details = models.GoldenConfiguration.objects.filter(device=device).first()
+        config_details = models.GoldenConfig.objects.filter(device=device).first()
         structure_format = "json"
         if not config_details:
             output = ""
@@ -277,17 +277,17 @@ class ConfigComplianceDetails(ContentTypePermissionRequiredMixin, generic.View):
             if request.GET.get("format") in ["json", "yaml"]:
                 structure_format = request.GET.get("format")
 
-            global_settings = models.GoldenConfigSettings.objects.first()
+            global_settings = models.GoldenConfigSetting.objects.first()
             _, output = graph_ql_query(request, device, global_settings.sot_agg_query)
 
             if structure_format == "yaml":
-                output = yaml.dump(output, default_flow_style=False)
+                output = yaml.dump(json.loads(json.dumps(output)), default_flow_style=False)
             else:
                 output = json.dumps(output, indent=4)
 
-        template_name = "nautobot_golden_config/config_details.html"
+        template_name = "nautobot_golden_config/configcompliancedetails.html"
         if request.GET.get("modal") == "true":
-            template_name = "nautobot_golden_config/config_details_modal.html"
+            template_name = "nautobot_golden_config/configcompliancedetails_modal.html"
 
         return render(
             request,
@@ -524,7 +524,26 @@ class ComplianceFeatureListView(generic.ObjectListView):
     filterset = filters.ComplianceFeatureFilter
     filterset_form = forms.ComplianceFeatureFilterForm
     queryset = models.ComplianceFeature.objects.all()
-    template_name = "nautobot_golden_config/compliance_features.html"
+    # TODO: Get import working
+    action_buttons = ("add", "export")
+
+
+class ComplianceFeatureView(generic.ObjectView):
+    """View for single ComplianceFeature instance."""
+
+    queryset = models.ComplianceFeature.objects.all()
+
+    def get_extra_context(self, request, instance):
+        """Add extra data to detail view for Nautobot."""
+        return {}
+
+
+class ComplianceFeatureBulkImportView(generic.BulkImportView):
+    """View for bulk import of ComplianceFeature."""
+
+    queryset = models.ComplianceFeature.objects.all()
+    model_form = forms.ComplianceFeatureCSVForm
+    table = tables.ComplianceFeatureTable
 
 
 class ComplianceFeatureEditView(generic.ObjectEditView):
@@ -547,6 +566,15 @@ class ComplianceFeatureBulkDeleteView(generic.BulkDeleteView):
     table = tables.ComplianceFeatureTable
 
 
+class ComplianceFeatureBulkEditView(generic.BulkEditView):
+    """View for bulk deleting ComplianceFeature instance."""
+
+    queryset = models.ComplianceFeature.objects.all()
+    filterset = filters.ComplianceFeatureFilter
+    table = tables.ComplianceFeatureTable
+    form = forms.ComplianceFeatureBulkEditForm
+
+
 #
 # ComplianceRule
 #
@@ -559,7 +587,26 @@ class ComplianceRuleListView(generic.ObjectListView):
     filterset = filters.ComplianceRuleFilter
     filterset_form = forms.ComplianceRuleFilterForm
     queryset = models.ComplianceRule.objects.all()
-    template_name = "nautobot_golden_config/compliance_rules.html"
+    # TODO: Get import working
+    action_buttons = ("add", "export")
+
+
+class ComplianceRuleView(generic.ObjectView):
+    """View for single ComplianceRule instance."""
+
+    queryset = models.ComplianceRule.objects.all()
+
+    def get_extra_context(self, request, instance):
+        """Add extra data to detail view for Nautobot."""
+        return {}
+
+
+class ComplianceRuleBulkImportView(generic.BulkImportView):
+    """View for bulk import of ComplianceRule."""
+
+    queryset = models.ComplianceRule.objects.all()
+    model_form = forms.ComplianceRuleCSVForm
+    table = tables.ComplianceRuleTable
 
 
 class ComplianceRuleEditView(generic.ObjectEditView):
@@ -582,15 +629,24 @@ class ComplianceRuleBulkDeleteView(generic.BulkDeleteView):
     table = tables.ComplianceRuleTable
 
 
+class ComplianceRuleBulkEditView(generic.BulkEditView):
+    """View for bulk deleting ComplianceRule instance."""
+
+    queryset = models.ComplianceRule.objects.all()
+    filterset = filters.ComplianceRuleFilter
+    table = tables.ComplianceRuleTable
+    form = forms.ComplianceRuleBulkEditForm
+
+
 #
-# GoldenConfigSettings
+# GoldenConfigSetting
 #
 
 
-class GoldenConfigSettingsView(generic.ObjectView):
-    """View for single dependency feature."""
+class GoldenConfigSettingView(generic.ObjectView):
+    """View for the only GoldenConfigSetting instance."""
 
-    queryset = models.GoldenConfigSettings.objects.all()
+    queryset = models.GoldenConfigSetting.objects.all()
 
     def get(self, request, *args, **kwargs):
         """Override the get parameter to get the first instance to enforce singleton pattern."""
@@ -610,12 +666,12 @@ class GoldenConfigSettingsView(generic.ObjectView):
         return {}
 
 
-class GoldenConfigSettingsEditView(generic.ObjectEditView):
+class GoldenConfigSettingEditView(generic.ObjectEditView):
     """View for editing the Global configurations."""
 
-    queryset = models.GoldenConfigSettings.objects.all()
-    model_form = forms.GoldenConfigSettingsFeatureForm
-    default_return_url = "plugins:nautobot_golden_config:goldenconfigsettings"
+    queryset = models.GoldenConfigSetting.objects.all()
+    model_form = forms.GoldenConfigSettingFeatureForm
+    default_return_url = "plugins:nautobot_golden_config:goldenconfigsetting"
 
     def get_object(self, kwargs):
         """Override method to get first object to enforce the singleton pattern."""
@@ -632,29 +688,12 @@ class ConfigRemoveListView(generic.ObjectListView):
 
     queryset = models.ConfigRemove.objects.all()
     table = tables.ConfigRemoveTable
-    filterset = filters.ComplianceRuleFilter
+    filterset = filters.ConfigRemoveFilter
     filterset_form = forms.ConfigRemoveFeatureFilterForm
 
 
-class ConfigRemoveBulkImportView(generic.BulkImportView):
-    """View for bulk import of applications."""
-
-    queryset = models.ConfigRemove.objects.all()
-    model_form = forms.ConfigRemoveCSVForm
-    table = tables.ConfigRemoveTable
-
-
-class ConfigRemoveBulkEditView(generic.BulkEditView):
-    """View for bulk deleting application features."""
-
-    queryset = models.ConfigRemove.objects.all()
-    filterset = filters.ConfigRemoveFilter
-    table = tables.ConfigRemoveTable
-    form = forms.ConfigRemoveBulkEditForm
-
-
 class ConfigRemoveView(generic.ObjectView):
-    """View for single dependency feature."""
+    """View for single ConfigRemove instance."""
 
     queryset = models.ConfigRemove.objects.all()
 
@@ -663,11 +702,34 @@ class ConfigRemoveView(generic.ObjectView):
         return {}
 
 
+class ConfigRemoveBulkImportView(generic.BulkImportView):
+    """View for bulk import of ConfigRemove."""
+
+    queryset = models.ConfigRemove.objects.all()
+    model_form = forms.ConfigRemoveCSVForm
+    table = tables.ConfigRemoveTable
+
+
+class ConfigRemoveBulkEditView(generic.BulkEditView):
+    """View for bulk deleting ConfigRemove instances."""
+
+    queryset = models.ConfigRemove.objects.all()
+    filterset = filters.ConfigRemoveFilter
+    table = tables.ConfigRemoveTable
+    form = forms.ConfigRemoveBulkEditForm
+
+
 class ConfigRemoveEditView(generic.ObjectEditView):
     """View for editing the current Line Removals."""
 
     queryset = models.ConfigRemove.objects.all()
     model_form = forms.ConfigRemoveForm
+
+
+class ConfigRemoveDeleteView(generic.ObjectDeleteView):
+    """View for deleting a ConfigRemove instance."""
+
+    queryset = models.ConfigRemove.objects.all()
 
 
 class ConfigRemoveBulkDeleteView(generic.BulkDeleteView):
@@ -687,15 +749,25 @@ class ConfigReplaceListView(generic.ObjectListView):
 
     queryset = models.ConfigReplace.objects.all()
     table = tables.ConfigReplaceTable
-    filterset = filters.ComplianceRuleFilter
+    filterset = filters.ConfigReplaceFilter
     filterset_form = forms.ConfigReplaceFeatureFilterForm
+
+
+class ConfigReplaceView(generic.ObjectView):
+    """View for single ConfigReplace instance."""
+
+    queryset = models.ConfigReplace.objects.all()
+
+    def get_extra_context(self, request, instance):
+        """Add extra data to detail view for Nautobot."""
+        return {}
 
 
 class ConfigReplaceEditView(generic.ObjectEditView):
     """View for editing the current Line Replacements."""
 
     queryset = models.ConfigReplace.objects.all()
-    model_form = forms.BackupLineReplaceForm
+    model_form = forms.ConfigReplaceForm
 
 
 class ConfigReplaceBulkDeleteView(generic.BulkDeleteView):
@@ -705,26 +777,22 @@ class ConfigReplaceBulkDeleteView(generic.BulkDeleteView):
     table = tables.ConfigReplaceTable
 
 
-class ConfigReplaceView(generic.ObjectView):
-    """View for single dependency feature."""
-
-    queryset = models.ConfigReplace.objects.all()
-
-    def get_extra_context(self, request, instance):
-        """Add extra data to detail view for Nautobot."""
-        return {}
-
-
 class ConfigReplaceBulkImportView(generic.BulkImportView):
-    """View for bulk import of applications."""
+    """View for bulk import of ConfigReplace."""
 
     queryset = models.ConfigReplace.objects.all()
     model_form = forms.ConfigReplaceCSVForm
     table = tables.ConfigReplaceTable
 
 
+class ConfigReplaceDeleteView(generic.ObjectDeleteView):
+    """View for deleting a ConfigReplace instance."""
+
+    queryset = models.ConfigReplace.objects.all()
+
+
 class ConfigReplaceBulkEditView(generic.BulkEditView):
-    """View for bulk deleting application features."""
+    """View for bulk deleting ConfigReplace instances."""
 
     queryset = models.ConfigReplace.objects.all()
     filterset = filters.ConfigReplaceFilter

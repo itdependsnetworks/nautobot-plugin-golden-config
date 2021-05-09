@@ -16,7 +16,7 @@ from nornir_nautobot.exceptions import NornirNautobotException
 from nautobot_plugin_nornir.plugins.inventory.nautobot_orm import NautobotORMInventory
 from nautobot_plugin_nornir.constants import NORNIR_SETTINGS
 
-from nautobot_golden_config.models import GoldenConfigSettings, GoldenConfiguration
+from nautobot_golden_config.models import GoldenConfigSetting, GoldenConfig
 from nautobot_golden_config.utilities.helper import (
     get_job_filter,
     get_dispatcher,
@@ -24,7 +24,7 @@ from nautobot_golden_config.utilities.helper import (
     check_jinja_template,
 )
 from nautobot_golden_config.utilities.graphql import graph_ql_query
-from .processor import ProcessGoldenConfig
+from nautobot_golden_config.nornir_plays.processor import ProcessGoldenConfig
 
 InventoryPluginRegister.register("nautobot-inventory", NautobotORMInventory)
 LOGGER = logging.getLogger(__name__)
@@ -45,9 +45,9 @@ def run_template(  # pylint: disable=too-many-arguments
     """
     obj = task.host.data["obj"]
 
-    intended_obj = GoldenConfiguration.objects.filter(device=obj).first()
+    intended_obj = GoldenConfig.objects.filter(device=obj).first()
     if not intended_obj:
-        intended_obj = GoldenConfiguration.objects.create(device=obj)
+        intended_obj = GoldenConfig.objects.create(device=obj)
     intended_obj.intended_last_attempt_date = task.host.defaults.data["now"]
     intended_obj.save()
 
@@ -86,7 +86,7 @@ def config_intended(job_result, data, jinja_root_path, intended_root_folder):
     """Nornir play to generate configurations."""
     now = datetime.now()
     logger = NornirLogger(__name__, job_result, data.get("debug"))
-    global_settings = GoldenConfigSettings.objects.first()
+    global_settings = GoldenConfigSetting.objects.first()
     verify_global_settings(logger, global_settings, ["jinja_path_template", "intended_path_template", "sot_agg_query"])
     nornir_obj = InitNornir(
         runner=NORNIR_SETTINGS.get("runner"),

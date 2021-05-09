@@ -10,12 +10,12 @@
     <div class="row noprint">
         <div class="col-sm-8 col-md-9">
             <ol class="breadcrumb">
-                <li>Config Removal</li>
-                <li><a href="{% url 'plugins:nautobot_golden_config:configremove_list' %}">Config Removals</a></li>
+                <li>Compliance Rule</li>
+                <li><a href="{% url 'plugins:nautobot_golden_config:compliancerule_list' %}">Compliance Rules</a></li>
             </ol>
         </div>
         <div class="col-sm-4 col-md-3">
-            <form action="{% url 'plugins:nautobot_golden_config:configremove_list' %}" method="get">
+            <form action="{% url 'plugins:nautobot_golden_config:compliancerule_list' %}" method="get">
                 <div class="input-group">
                     <input type="text" name="q" class="form-control" />
                     <span class="input-group-btn">
@@ -28,13 +28,13 @@
         </div>
     </div>
     <div class="pull-right noprint">
-        {% if perms.nautobot_golden_config.add_configremove %}
+        {% if perms.nautobot_golden_config.add_compliancerule %}
             {% clone_button object %}
         {% endif %}
-        {% if perms.nautobot_golden_config.change_configremove %}
+        {% if perms.nautobot_golden_config.change_compliancerule %}
             {% edit_button object use_pk=1 %}
         {% endif %}
-        {% if perms.nautobot_golden_config.delete_configremove %}
+        {% if perms.nautobot_golden_config.delete_compliancerule %}
             {% delete_button object use_pk=1 %}
         {% endif %}
     </div>
@@ -45,11 +45,11 @@
     </div>
     <ul class="nav nav-tabs">
         <li role="presentation"{% if not active_tab %} class="active"{% endif %}>
-            <a href="{{ object.get_absolute_url }}">Application Service</a>
+            <a href="{{ object.get_absolute_url }}">Compliance Rule</a>
         </li>
         {% if perms.extras.view_objectchange %}
             <li role="presentation"{% if active_tab == 'changelog' %} class="active"{% endif %}>
-                <a href="{% url 'plugins:nautobot_golden_config:configremove_changelog' pk=object.pk %}">Change Log</a>
+                <a href="{% url 'plugins:nautobot_golden_config:compliancerule_changelog' pk=object.pk %}">Change Log</a>
             </li>
         {% endif %}
     </ul>
@@ -64,20 +64,28 @@
             </div>
             <table class="table table-hover panel-body attr-table">
                 <tr>
-                    <td>Name</td>
-                    <td>{{ object.name }}</a></td>
-                </tr>
-                <tr>
                     <td>Platform</td>
                     <td>{{ object.platform.name }}</td>
+                </tr>
+                <tr>
+                    <td>Feature</td>
+                    <td>{{ object.feature.name }}</a></td>
                 </tr>
                 <tr>
                     <td>Description</td>
                     <td>{{ object.description }}</a></td>
                 </tr>
                 <tr>
-                    <td>Regex</td>
-                    <td><pre>{{ object.regex }}</pre></a></td>
+                    <td>Config Ordered</td>
+                    <td>{{ object.config_ordered }}</a></td>
+                </tr>
+                <tr>
+                    <td>Match Config</td>
+                    <td>{{ object.match_config }}</a></td>
+                </tr>
+                <tr>
+                    <td>Config Type</td>
+                    <td>{{ object.config_type }}</a></td>
                 </tr>
             </table>
         </div>

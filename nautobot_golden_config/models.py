@@ -46,6 +46,12 @@ class ComplianceFeature(PrimaryModel):
     slug = models.SlugField(max_length=100, unique=True)
     description = models.CharField(max_length=200, blank=True)
 
+    csv_headers = ["name", "slug", "description"]
+
+    def to_csv(self):
+        """Indicates model fields to return as csv."""
+        return (self.name, self.slug, self.description)
+
     class Meta:
         """Meta information for ComplianceRule model."""
 
@@ -55,9 +61,9 @@ class ComplianceFeature(PrimaryModel):
         """Return a sane string representation of the instance."""
         return self.slug
 
-    def get_absolute_url(self):  # pylint: disable=no-self-use
+    def get_absolute_url(self):
         """Absolute url for the ComplianceRule instance."""
-        return reverse("plugins:nautobot_golden_config:compliancefeature_list")
+        return reverse("plugins:nautobot_golden_config:compliancefeature", args=[self.pk])
 
 
 @extras_features(
@@ -103,6 +109,19 @@ class ComplianceRule(PrimaryModel):
         help_text="Whether the config is in cli or json/structured format.",
     )
 
+    csv_headers = ["platform", "feature", "description", "config_ordered", "match_config", "config_type"]
+
+    def to_csv(self):
+        """Indicates model fields to return as csv."""
+        return (
+            self.platform.slug,
+            self.feature.name,
+            self.description,
+            self.config_ordered,
+            self.match_config,
+            self.config_type,
+        )
+
     class Meta:
         """Meta information for ComplianceRule model."""
 
@@ -116,9 +135,9 @@ class ComplianceRule(PrimaryModel):
         """Return a sane string representation of the instance."""
         return f"{self.platform} - {self.feature.name}"
 
-    def get_absolute_url(self):  # pylint: disable=no-self-use
+    def get_absolute_url(self):
         """Absolute url for the ComplianceRule instance."""
-        return reverse("plugins:nautobot_golden_config:compliancerule_list")
+        return reverse("plugins:nautobot_golden_config:compliancerule", args=[self.pk])
 
     def clean(self):
         """Verify that if cli, then match_config is set."""
@@ -207,7 +226,7 @@ class ConfigCompliance(PrimaryModel):
     "relationships",
     "webhooks",
 )
-class GoldenConfiguration(PrimaryModel):
+class GoldenConfig(PrimaryModel):
     """Configuration Management Model."""
 
     device = models.ForeignKey(
@@ -269,8 +288,8 @@ class GoldenConfiguration(PrimaryModel):
         return f"{self.device}"
 
 
-class GoldenConfigSettings(PrimaryModel):
-    """GoldenConfigSettings Model defintion. This provides global configs instead of via configs.py."""
+class GoldenConfigSetting(PrimaryModel):
+    """GoldenConfigSetting Model defintion. This provides global configs instead of via configs.py."""
 
     # TODO: Need to limit to the correct content_identifier or is it _token?
     backup_repository = models.ForeignKey(
@@ -324,7 +343,7 @@ class GoldenConfigSettings(PrimaryModel):
 
     def get_absolute_url(self):  # pylint: disable=no-self-use
         """Return absolute URL for instance."""
-        return reverse("plugins:nautobot_golden_config:goldenconfigsettings")
+        return reverse("plugins:nautobot_golden_config:goldenconfigsetting")
 
     def __str__(self):
         """Return a simple string if model is called."""
@@ -425,7 +444,7 @@ class GoldenConfigSettings(PrimaryModel):
     "webhooks",
 )
 class ConfigRemove(PrimaryModel):
-    """GoldenConfigSettings for Regex Line Removals from Backup Configuration Model defintion."""
+    """GoldenConfigSetting for Regex Line Removals from Backup Configuration Model defintion."""
 
     name = models.CharField(max_length=255, null=False, blank=False)
     platform = models.ForeignKey(
@@ -439,12 +458,18 @@ class ConfigRemove(PrimaryModel):
         max_length=200,
         blank=True,
     )
-    regex_line = models.CharField(
+    regex = models.CharField(
         max_length=200,
         verbose_name="Regex Pattern",
         help_text="Regex pattern used to remove a line from the backup configuration.",
     )
-    csv_headers = ["name", "platform", "description", "regex_line"]
+
+    clone_fields = ["platform", "description", "regex"]
+    csv_headers = ["name", "platform", "description", "regex"]
+
+    def to_csv(self):
+        """Indicates model fields to return as csv."""
+        return (self.name, self.platform.slug, self.regex)
 
     class Meta:
         """Meta information for ComplianceRule model."""
@@ -458,11 +483,7 @@ class ConfigRemove(PrimaryModel):
 
     def get_absolute_url(self):  # pylint: disable=no-self-use
         """Return absolute URL for instance."""
-        # TODO: Update to create detailed view, as shown in next line
-        # return reverse("plugins:nautobot_golden_config:configremove", args=[self.pk])
-        return reverse(
-            "plugins:nautobot_golden_config:configremove_list",
-        )
+        return reverse("plugins:nautobot_golden_config:configremove", args=[self.pk])
 
 
 @extras_features(
@@ -475,7 +496,7 @@ class ConfigRemove(PrimaryModel):
     "webhooks",
 )
 class ConfigReplace(PrimaryModel):
-    """GoldenConfigSettings for Regex Line Replacements from Backup Configuration Model defintion."""
+    """GoldenConfigSetting for Regex Line Replacements from Backup Configuration Model defintion."""
 
     name = models.CharField(max_length=255, null=False, blank=False)
     platform = models.ForeignKey(
@@ -489,18 +510,23 @@ class ConfigReplace(PrimaryModel):
         max_length=200,
         blank=True,
     )
-    substitute_text = models.CharField(
+    regex = models.CharField(
         max_length=200,
         verbose_name="Regex Pattern to Substitute",
         help_text="Regex pattern that will be found and replaced with 'replaced text'.",
     )
-    replaced_text = models.CharField(
+    replace = models.CharField(
         max_length=200,
         verbose_name="Replaced Text",
         help_text="Text that will be inserted in place of Regex pattern match.",
     )
 
-    csv_headers = ["name", "platform", "description", "substitute_text", "replaced_text"]
+    clone_fields = ["platform", "description", "regex", "replace"]
+    csv_headers = ["name", "platform", "description", "regex", "replace"]
+
+    def to_csv(self):
+        """Indicates model fields to return as csv."""
+        return (self.name, self.platform.slug, self.regex, self.replace)
 
     class Meta:
         """Meta information for ComplianceRule model."""
@@ -508,13 +534,9 @@ class ConfigReplace(PrimaryModel):
         ordering = ("platform", "name")
         unique_together = ("name", "platform")
 
-    def get_absolute_url(self):  # pylint: disable=no-self-use
+    def get_absolute_url(self):
         """Return absolute URL for instance."""
-        # TODO: Update to create detailed view, as shown in next line
-        # return reverse("plugins:nautobot_golden_config:configreplace", args=[self.pk])
-        return reverse(
-            "plugins:nautobot_golden_config:configreplace_list",
-        )
+        return reverse("plugins:nautobot_golden_config:configreplace", args=[self.pk])
 
     def __str__(self):
         """Return a simple string if model is called."""

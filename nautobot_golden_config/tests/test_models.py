@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from nautobot.dcim.models import Platform
 
 from nautobot_golden_config.models import (
-    GoldenConfigSettings,
+    GoldenConfigSetting,
     ConfigRemove,
     ConfigReplace,
 )
@@ -16,20 +16,20 @@ class ConfigComplianceModelTestCase(TestCase):
     """Test ConfigCompliance Model."""
 
 
-class GoldenConfigurationTestCase(TestCase):
-    """Test GoldenConfiguration Model."""
+class GoldenConfigTestCase(TestCase):
+    """Test GoldenConfig Model."""
 
 
 class ComplianceRuleTestCase(TestCase):
     """Test ComplianceRule Model."""
 
 
-class GoldenConfigSettingsModelTestCase(TestCase):
-    """Test GoldenConfigSettings Model."""
+class GoldenConfigSettingModelTestCase(TestCase):
+    """Test GoldenConfigSetting Model."""
 
     def setUp(self):
         """Get the golden config settings with the only allowed id."""
-        self.global_settings = GoldenConfigSettings.objects.first()
+        self.global_settings = GoldenConfigSetting.objects.first()
 
     def test_bad_graphql_query(self):
         """Invalid graphql query."""
@@ -57,14 +57,14 @@ class ConfigRemoveModelTestCase(TestCase):
         """Setup Object."""
         self.platform = Platform.objects.create(slug="cisco_ios")
         self.line_removal = ConfigRemove.objects.create(
-            name="foo", platform=self.platform, description="foo bar", regex_line="^Back.*"
+            name="foo", platform=self.platform, description="foo bar", regex="^Back.*"
         )
 
     def test_add_line_removal_entry(self):
         """Test Add Object."""
         self.assertEqual(self.line_removal.name, "foo")
         self.assertEqual(self.line_removal.description, "foo bar")
-        self.assertEqual(self.line_removal.regex_line, "^Back.*")
+        self.assertEqual(self.line_removal.regex, "^Back.*")
 
     def test_edit_line_removal_entry(self):
         """Test Edit Object."""
@@ -73,12 +73,12 @@ class ConfigRemoveModelTestCase(TestCase):
         new_regex = "^Running.*"
         self.line_removal.name = new_name
         self.line_removal.description = new_desc
-        self.line_removal.regex_line = new_regex
+        self.line_removal.regex = new_regex
         self.line_removal.save()
 
         self.assertEqual(self.line_removal.name, new_name)
         self.assertEqual(self.line_removal.description, new_desc)
-        self.assertEqual(self.line_removal.regex_line, new_regex)
+        self.assertEqual(self.line_removal.regex, new_regex)
 
 
 class ConfigReplaceModelTestCase(TestCase):
@@ -91,16 +91,16 @@ class ConfigReplaceModelTestCase(TestCase):
             name="foo",
             platform=self.platform,
             description="foo bar",
-            substitute_text=r"username(\S+)",
-            replaced_text="<redacted>",
+            regex=r"username(\S+)",
+            replace="<redacted>",
         )
 
     def test_add_line_replace_entry(self):
         """Test Add Object."""
         self.assertEqual(self.line_replace.name, "foo")
         self.assertEqual(self.line_replace.description, "foo bar")
-        self.assertEqual(self.line_replace.substitute_text, r"username(\S+)")
-        self.assertEqual(self.line_replace.replaced_text, "<redacted>")
+        self.assertEqual(self.line_replace.regex, r"username(\S+)")
+        self.assertEqual(self.line_replace.replace, "<redacted>")
 
     def test_edit_line_replace_entry(self):
         """Test Edit Object."""
@@ -109,10 +109,10 @@ class ConfigReplaceModelTestCase(TestCase):
         new_regex = r"password(\S+)"
         self.line_replace.name = new_name
         self.line_replace.description = new_desc
-        self.line_replace.substitute_text = new_regex
+        self.line_replace.regex = new_regex
         self.line_replace.save()
 
         self.assertEqual(self.line_replace.name, new_name)
         self.assertEqual(self.line_replace.description, new_desc)
-        self.assertEqual(self.line_replace.substitute_text, new_regex)
-        self.assertEqual(self.line_replace.replaced_text, "<redacted>")
+        self.assertEqual(self.line_replace.regex, new_regex)
+        self.assertEqual(self.line_replace.replace, "<redacted>")

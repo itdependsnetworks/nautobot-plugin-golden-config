@@ -7,7 +7,7 @@ from graphene_django.settings import graphene_settings
 from graphql import get_default_backend
 from graphql.error import GraphQLSyntaxError
 
-from nautobot_golden_config.models import GoldenConfigSettings
+from nautobot_golden_config.models import GoldenConfigSetting
 from .constant import PLUGIN_CFG
 
 LOGGER = logging.getLogger(__name__)

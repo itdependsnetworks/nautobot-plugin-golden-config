@@ -25,33 +25,33 @@ class ConfigComplianceType(DjangoObjectType):
         filterset_class = filters.ConfigComplianceFilter
 
 
-class GoldenConfigurationType(DjangoObjectType):
+class GoldenConfigType(DjangoObjectType):
     """Graphql Type Object for Golden Configuration model."""
 
     class Meta:
-        """Meta object boilerplate for GoldenConfigurationType."""
+        """Meta object boilerplate for GoldenConfigType."""
 
-        model = models.GoldenConfiguration
-        filterset_class = filters.GoldenConfigurationFilter
+        model = models.GoldenConfig
+        filterset_class = filters.GoldenConfigFilter
 
 
 class ComplianceRuleType(DjangoObjectType):
     """Graphql Type Object for Compliance Rule model."""
 
     class Meta:
-        """Meta object boilerplate for GoldenConfigurationType."""
+        """Meta object boilerplate for GoldenConfigType."""
 
         model = models.ComplianceRule
         filterset_class = filters.ComplianceRuleFilter
 
 
-class GoldenConfigSettingsType(DjangoObjectType):
+class GoldenConfigSettingType(DjangoObjectType):
     """Graphql Type Object for Golden Config Settings model."""
 
     class Meta:
-        """Meta object boilerplate for GoldenConfigSettingsType."""
+        """Meta object boilerplate for GoldenConfigSettingType."""
 
-        model = models.GoldenConfigSettings
+        model = models.GoldenConfigSetting
 
 
 class ConfigRemoveType(DjangoObjectType):
@@ -74,9 +74,9 @@ class ConfigReplaceType(DjangoObjectType):
 
 graphql_types = [
     ConfigComplianceType,
-    GoldenConfigurationType,
+    GoldenConfigType,
     ComplianceRuleType,
-    GoldenConfigSettingsType,
+    GoldenConfigSettingType,
     ConfigRemoveType,
     ConfigReplaceType,
 ]

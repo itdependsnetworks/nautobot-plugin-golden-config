@@ -13,8 +13,8 @@ from nautobot.utilities.filters import TreeNodeMultipleChoiceFilter
 from nautobot_golden_config import models
 
 
-class GoldenConfigurationFilter(CreatedUpdatedFilterSet):
-    """Filter capabilities for GoldenConfiguration instances."""
+class GoldenConfigFilter(CreatedUpdatedFilterSet):
+    """Filter capabilities for GoldenConfig instances."""
 
     q = django_filters.CharFilter(
         method="search",
@@ -142,7 +142,7 @@ class GoldenConfigurationFilter(CreatedUpdatedFilterSet):
     class Meta:
         """Meta class attributes for GoldenConfig."""
 
-        model = models.GoldenConfiguration
+        model = models.GoldenConfig
         distinct = True
         fields = [
             "q",
@@ -169,7 +169,7 @@ class GoldenConfigurationFilter(CreatedUpdatedFilterSet):
         ]
 
 
-class ConfigComplianceFilter(GoldenConfigurationFilter):
+class ConfigComplianceFilter(GoldenConfigFilter):
     """Filter capabilities for ConfigCompliance instances."""
 
     device = django_filters.ModelMultipleChoiceFilter(

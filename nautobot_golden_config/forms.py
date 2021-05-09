@@ -3,34 +3,26 @@
 from django import forms
 from django.db.models import Subquery
 
+import nautobot.extras.forms as extras_forms
+import nautobot.utilities.forms as utilities_forms
 from nautobot.dcim.models import Device, Platform, Region, Site, DeviceRole, DeviceType, Manufacturer, Rack, RackGroup
 from nautobot.extras.models import Status
-import nautobot.extras.forms as extras_forms
 from nautobot.tenancy.models import Tenant, TenantGroup
-from nautobot.utilities.forms import BootstrapMixin, DynamicModelMultipleChoiceField, DynamicModelChoiceField
 
-from .models import (
-    ConfigCompliance,
-    ComplianceRule,
-    ComplianceFeature,
-    GoldenConfigSettings,
-    GoldenConfiguration,
-    ConfigRemove,
-    ConfigReplace,
-)
+from nautobot_golden_config import models
 
 
-class SettingsFeatureFilterForm(BootstrapMixin, forms.Form):
+class SettingsFeatureFilterForm(utilities_forms.BootstrapMixin, forms.Form):
     """Form for ComplianceRule instances."""
 
-    platform = DynamicModelChoiceField(queryset=Platform.objects.all(), required=False)
+    platform = utilities_forms.DynamicModelChoiceField(queryset=Platform.objects.all(), required=False)
     name = forms.CharField(required=False)
 
 
-class GoldenConfigurationFilterForm(BootstrapMixin, extras_forms.CustomFieldFilterForm):
-    """Filter Form for GoldenConfiguration instances."""
+class GoldenConfigFilterForm(utilities_forms.BootstrapMixin, extras_forms.CustomFieldFilterForm):
+    """Filter Form for GoldenConfig instances."""
 
-    model = GoldenConfiguration
+    model = models.GoldenConfig
 
     class Meta:
         """Meta definitions of searchable fields."""
@@ -51,24 +43,26 @@ class GoldenConfigurationFilterForm(BootstrapMixin, extras_forms.CustomFieldFilt
         "device",
     ]
     q = forms.CharField(required=False, label="Search")
-    tenant_group = DynamicModelMultipleChoiceField(
+    tenant_group = utilities_forms.DynamicModelMultipleChoiceField(
         queryset=TenantGroup.objects.all(), to_field_name="slug", required=False, null_option="None"
     )
-    tenant = DynamicModelMultipleChoiceField(
+    tenant = utilities_forms.DynamicModelMultipleChoiceField(
         queryset=Tenant.objects.all(),
         to_field_name="slug",
         required=False,
         null_option="None",
         query_params={"group": "$tenant_group"},
     )
-    region = DynamicModelMultipleChoiceField(queryset=Region.objects.all(), to_field_name="slug", required=False)
-    site = DynamicModelMultipleChoiceField(
+    region = utilities_forms.DynamicModelMultipleChoiceField(
+        queryset=Region.objects.all(), to_field_name="slug", required=False
+    )
+    site = utilities_forms.DynamicModelMultipleChoiceField(
         queryset=Site.objects.all(), to_field_name="slug", required=False, query_params={"region": "$region"}
     )
-    rack_group_id = DynamicModelMultipleChoiceField(
+    rack_group_id = utilities_forms.DynamicModelMultipleChoiceField(
         queryset=RackGroup.objects.all(), required=False, label="Rack group", query_params={"site": "$site"}
     )
-    rack_id = DynamicModelMultipleChoiceField(
+    rack_id = utilities_forms.DynamicModelMultipleChoiceField(
         queryset=Rack.objects.all(),
         required=False,
         label="Rack",
@@ -78,28 +72,30 @@ class GoldenConfigurationFilterForm(BootstrapMixin, extras_forms.CustomFieldFilt
             "group_id": "$rack_group_id",
         },
     )
-    role = DynamicModelMultipleChoiceField(queryset=DeviceRole.objects.all(), to_field_name="slug", required=False)
-    manufacturer = DynamicModelMultipleChoiceField(
+    role = utilities_forms.DynamicModelMultipleChoiceField(
+        queryset=DeviceRole.objects.all(), to_field_name="slug", required=False
+    )
+    manufacturer = utilities_forms.DynamicModelMultipleChoiceField(
         queryset=Manufacturer.objects.all(), to_field_name="slug", required=False, label="Manufacturer"
     )
-    device_type_id = DynamicModelMultipleChoiceField(
+    device_type_id = utilities_forms.DynamicModelMultipleChoiceField(
         queryset=DeviceType.objects.all(),
         required=False,
         label="Model",
         display_field="model",
         query_params={"manufacturer": "$manufacturer"},
     )
-    platform = DynamicModelMultipleChoiceField(
+    platform = utilities_forms.DynamicModelMultipleChoiceField(
         queryset=Platform.objects.all(), to_field_name="slug", required=False, null_option="None"
     )
-    device = DynamicModelMultipleChoiceField(
+    device = utilities_forms.DynamicModelMultipleChoiceField(
         queryset=Device.objects.all(), required=False, null_option="None", label="Device"
     )
 
     def __init__(self, *args, **kwargs):
         """Required for status to work."""
         super().__init__(*args, **kwargs)
-        self.fields["device_status_id"] = DynamicModelMultipleChoiceField(
+        self.fields["device_status_id"] = utilities_forms.DynamicModelMultipleChoiceField(
             required=False,
             queryset=Status.objects.all(),
             query_params={"content_types": Device._meta.label_lower},
@@ -110,33 +106,37 @@ class GoldenConfigurationFilterForm(BootstrapMixin, extras_forms.CustomFieldFilt
         self.order_fields(self.field_order)  # Reorder fields again
 
 
-class ConfigComplianceFilterForm(GoldenConfigurationFilterForm):
+# ConfigCompliance
+
+
+class ConfigComplianceFilterForm(GoldenConfigFilterForm):
     """Filter Form for ConfigCompliance instances."""
 
-    model = ConfigCompliance
-    device = DynamicModelMultipleChoiceField(
-        queryset=Device.objects.filter(id__in=Subquery(ConfigCompliance.objects.distinct("device").values("device"))),
+    model = models.ConfigCompliance
+    device = utilities_forms.DynamicModelMultipleChoiceField(
+        queryset=Device.objects.filter(
+            id__in=Subquery(models.ConfigCompliance.objects.distinct("device").values("device"))
+        ),
         to_field_name="name",
         required=False,
         null_option="None",
     )
 
 
-class ComplianceRuleFilterForm(SettingsFeatureFilterForm):
-    """Form for ComplianceRule instances."""
-
-    model = ComplianceRule
+# ComplianceRule
 
 
-class ComplianceRuleForm(BootstrapMixin, forms.ModelForm):
+class ComplianceRuleForm(
+    utilities_forms.BootstrapMixin, extras_forms.CustomFieldModelForm, extras_forms.RelationshipModelForm
+):
     """Filter Form for ComplianceRule instances."""
 
-    platform = DynamicModelChoiceField(queryset=Platform.objects.all())
+    platform = utilities_forms.DynamicModelChoiceField(queryset=Platform.objects.all())
 
     class Meta:
         """Boilerplate form Meta data for compliance rule."""
 
-        model = ComplianceRule
+        model = models.ComplianceRule
         fields = (
             "platform",
             "feature",
@@ -147,29 +147,196 @@ class ComplianceRuleForm(BootstrapMixin, forms.ModelForm):
         )
 
 
-class ComplianceFeatureFilterForm(SettingsFeatureFilterForm):
-    """Form for ComplianceFeature instances."""
+class ComplianceRuleFilterForm(SettingsFeatureFilterForm):
+    """Form for ComplianceRule instances."""
 
-    model = ComplianceFeature
+    model = models.ComplianceRule
 
 
-class ComplianceFeatureForm(BootstrapMixin, extras_forms.CustomFieldModelForm, extras_forms.RelationshipModelForm):
+class ComplianceRuleBulkEditForm(
+    utilities_forms.BootstrapMixin, extras_forms.AddRemoveTagsForm, extras_forms.CustomFieldBulkEditForm
+):
+    """BulkEdit form for ComplianceRule instances."""
+
+    pk = forms.ModelMultipleChoiceField(queryset=models.ComplianceRule.objects.all(), widget=forms.MultipleHiddenInput)
+
+    class Meta:
+        """Boilerplate form Meta data for application feature."""
+
+        nullable_fields = []
+
+
+class ComplianceRuleCSVForm(extras_forms.CustomFieldModelCSVForm):
+    """CSV Form for ComplianceRule instances."""
+
+    class Meta:
+        """Boilerplate form Meta data for application feature."""
+
+        model = models.ComplianceRule
+        fields = models.ComplianceRule.csv_headers
+
+
+# ComplianceFeature
+
+
+class ComplianceFeatureForm(
+    utilities_forms.BootstrapMixin, extras_forms.CustomFieldModelForm, extras_forms.RelationshipModelForm
+):
     """Filter Form for ComplianceFeature instances."""
 
     class Meta:
         """Boilerplate form Meta data for compliance feature."""
 
-        model = ComplianceFeature
+        model = models.ComplianceFeature
         fields = ("name", "slug", "description")
 
 
-class GoldenConfigSettingsFeatureForm(BootstrapMixin, forms.ModelForm):
-    """Filter Form for GoldenConfigSettingsFeatureForm instances."""
+class ComplianceFeatureFilterForm(SettingsFeatureFilterForm):
+    """Form for ComplianceFeature instances."""
+
+    model = models.ComplianceFeature
+
+
+class ComplianceFeatureBulkEditForm(
+    utilities_forms.BootstrapMixin, extras_forms.AddRemoveTagsForm, extras_forms.CustomFieldBulkEditForm
+):
+    """BulkEdit form for ComplianceFeature instances."""
+
+    pk = forms.ModelMultipleChoiceField(
+        queryset=models.ComplianceFeature.objects.all(), widget=forms.MultipleHiddenInput
+    )
 
     class Meta:
-        """Filter Form Meta Data for GoldenConfigSettingsFeatureForm instances."""
+        """Boilerplate form Meta data for application feature."""
 
-        model = GoldenConfigSettings
+        nullable_fields = []
+
+
+class ComplianceFeatureCSVForm(extras_forms.CustomFieldModelCSVForm):
+    """CSV Form for ComplianceFeature instances."""
+
+    class Meta:
+        """Boilerplate form Meta data for application feature."""
+
+        model = models.ComplianceFeature
+        fields = models.ComplianceFeature.csv_headers
+
+
+# ConfigRemove
+
+
+class ConfigRemoveForm(
+    utilities_forms.BootstrapMixin, extras_forms.CustomFieldModelForm, extras_forms.RelationshipModelForm
+):
+    """Filter Form for Line Removal instances."""
+
+    platform = utilities_forms.DynamicModelChoiceField(queryset=Platform.objects.all())
+
+    class Meta:
+        """Boilerplate form Meta data for removal feature."""
+
+        model = models.ConfigRemove
+        fields = (
+            "platform",
+            "name",
+            "description",
+            "regex",
+        )
+
+
+class ConfigRemoveFeatureFilterForm(SettingsFeatureFilterForm):
+    """Filter Form for Line Removal."""
+
+    model = models.ConfigRemove
+
+
+class ConfigRemoveBulkEditForm(
+    utilities_forms.BootstrapMixin, extras_forms.AddRemoveTagsForm, extras_forms.CustomFieldBulkEditForm
+):
+    """BulkEdit form for ConfigRemove instances."""
+
+    pk = forms.ModelMultipleChoiceField(queryset=models.ConfigRemove.objects.all(), widget=forms.MultipleHiddenInput)
+
+    class Meta:
+        """Boilerplate form Meta data for application feature."""
+
+        nullable_fields = []
+
+
+class ConfigRemoveCSVForm(extras_forms.CustomFieldModelCSVForm):
+    """CSV Form for ConfigRemove instances."""
+
+    class Meta:
+        """Boilerplate form Meta data for application feature."""
+
+        model = models.ConfigRemove
+        fields = models.ConfigRemove.csv_headers
+
+
+# ConfigReplace
+
+
+class ConfigReplaceForm(
+    utilities_forms.BootstrapMixin, extras_forms.CustomFieldModelForm, extras_forms.RelationshipModelForm
+):
+    """Filter Form for Line Removal instances."""
+
+    platform = utilities_forms.DynamicModelChoiceField(queryset=Platform.objects.all())
+
+    class Meta:
+        """Boilerplate form Meta data for removal feature."""
+
+        model = models.ConfigReplace
+        fields = (
+            "platform",
+            "name",
+            "description",
+            "regex",
+            "replace",
+        )
+
+
+class ConfigReplaceFeatureFilterForm(SettingsFeatureFilterForm):
+    """Filter Form for Line Replacement."""
+
+    model = models.ConfigReplace
+
+
+class ConfigReplaceCSVForm(extras_forms.CustomFieldModelCSVForm):
+    """CSV Form for ConfigReplace instances."""
+
+    class Meta:
+        """Boilerplate form Meta data for application feature."""
+
+        model = models.ConfigReplace
+        fields = models.ConfigReplace.csv_headers
+
+
+class ConfigReplaceBulkEditForm(
+    utilities_forms.BootstrapMixin, extras_forms.AddRemoveTagsForm, extras_forms.CustomFieldBulkEditForm
+):
+    """BulkEdit form for ConfigReplace instances."""
+
+    pk = forms.ModelMultipleChoiceField(queryset=models.ConfigReplace.objects.all(), widget=forms.MultipleHiddenInput)
+
+    class Meta:
+        """Boilerplate form Meta data for application feature."""
+
+        nullable_fields = []
+
+
+# GoldenConfigSetting
+
+
+class GoldenConfigSettingFeatureForm(
+    utilities_forms.BootstrapMixin, extras_forms.CustomFieldModelForm, extras_forms.RelationshipModelForm
+):
+    """Filter Form for GoldenConfigSettingFeatureForm instances."""
+
+    class Meta:
+        """Filter Form Meta Data for GoldenConfigSettingFeatureForm instances."""
+
+        model = models.GoldenConfigSetting
         fields = (
             "backup_repository",
             "backup_path_template",
@@ -181,92 +348,3 @@ class GoldenConfigSettingsFeatureForm(BootstrapMixin, forms.ModelForm):
             "scope",
             "sot_agg_query",
         )
-
-
-class ConfigRemoveForm(BootstrapMixin, forms.ModelForm):
-    """Filter Form for Line Removal instances."""
-
-    platform = DynamicModelChoiceField(queryset=Platform.objects.all())
-
-    class Meta:
-        """Boilerplate form Meta data for removal feature."""
-
-        model = ConfigRemove
-        fields = (
-            "platform",
-            "name",
-            "description",
-            "regex_line",
-        )
-
-
-class BackupLineReplaceForm(BootstrapMixin, forms.ModelForm):
-    """Filter Form for Line Removal instances."""
-
-    platform = DynamicModelChoiceField(queryset=Platform.objects.all())
-
-    class Meta:
-        """Boilerplate form Meta data for removal feature."""
-
-        model = ConfigReplace
-        fields = (
-            "platform",
-            "name",
-            "description",
-            "substitute_text",
-            "replaced_text",
-        )
-
-
-class ConfigRemoveFeatureFilterForm(SettingsFeatureFilterForm):
-    """Filter Form for Line Removal."""
-
-    model = ConfigRemove
-
-
-class ConfigReplaceFeatureFilterForm(SettingsFeatureFilterForm):
-    """Filter Form for Line Replacement."""
-
-    model = ConfigReplace
-
-
-class ConfigRemoveCSVForm(extras_forms.CustomFieldModelCSVForm):
-    """CSV Form for ConfigRemove instances."""
-
-    class Meta:
-        """Boilerplate form Meta data for application feature."""
-
-        model = ConfigRemove
-        fields = ConfigRemove.csv_headers
-
-
-class ConfigRemoveBulkEditForm(BootstrapMixin, extras_forms.AddRemoveTagsForm, extras_forms.CustomFieldBulkEditForm):
-    """BulkEdit form for ConfigRemove instances."""
-
-    pk = forms.ModelMultipleChoiceField(queryset=ConfigRemove.objects.all(), widget=forms.MultipleHiddenInput)
-
-    class Meta:
-        """Boilerplate form Meta data for application feature."""
-
-        nullable_fields = []
-
-
-class ConfigReplaceCSVForm(extras_forms.CustomFieldModelCSVForm):
-    """CSV Form for ConfigReplace instances."""
-
-    class Meta:
-        """Boilerplate form Meta data for application feature."""
-
-        model = ConfigReplace
-        fields = ConfigReplace.csv_headers
-
-
-class ConfigReplaceBulkEditForm(BootstrapMixin, extras_forms.AddRemoveTagsForm, extras_forms.CustomFieldBulkEditForm):
-    """BulkEdit form for ConfigReplace instances."""
-
-    pk = forms.ModelMultipleChoiceField(queryset=ConfigReplace.objects.all(), widget=forms.MultipleHiddenInput)
-
-    class Meta:
-        """Boilerplate form Meta data for application feature."""
-
-        nullable_fields = []
