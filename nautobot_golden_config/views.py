@@ -12,9 +12,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from django.contrib import messages
-from django.db.models import F, Q
-from django.db.models import Subquery, OuterRef, Count, FloatField, ExpressionWrapper, ProtectedError
+from django.db.models import F, Q, Max
+from django.db.models import Count, FloatField, ExpressionWrapper, ProtectedError
 from django.shortcuts import render, redirect
+from django_pivot.pivot import pivot
 
 from nautobot.dcim.models import Device
 from nautobot.core.views import generic
@@ -25,7 +26,6 @@ from nautobot.utilities.views import ContentTypePermissionRequiredMixin
 from nautobot_golden_config import filters, forms, models, tables
 
 from .utilities.constant import PLUGIN_CFG, ENABLE_COMPLIANCE, CONFIG_FEATURES
-from .utilities.helper import get_allowed_os_from_nested
 from .utilities.graphql import graph_ql_query
 
 LOGGER = logging.getLogger(__name__)
@@ -51,10 +51,6 @@ class GoldenConfigurationListView(generic.ObjectListView):
         """Boilerplace code to modify data before returning."""
         return CONFIG_FEATURES
 
-    def alter_queryset(self, request):
-        """Build actual runtime queryset as the build time queryset does not consider changes to Settings."""
-        return self.queryset.filter(get_allowed_os_from_nested())
-
 
 class GoldenConfigurationBulkDeleteView(generic.BulkDeleteView):
     """Standard view for bulk deletion of data."""
@@ -62,10 +58,6 @@ class GoldenConfigurationBulkDeleteView(generic.BulkDeleteView):
     queryset = models.GoldenConfiguration.objects.all()
     table = tables.GoldenConfigurationTable
     filterset = filters.GoldenConfigurationFilter
-
-    def alter_queryset(self, request):
-        """Build actual runtime queryset as the build time queryset does not consider changes to Settings."""
-        return self.queryset.filter(get_allowed_os_from_nested())
 
 
 #
@@ -78,39 +70,23 @@ class ConfigComplianceListView(generic.ObjectListView):
 
     filterset = filters.ConfigComplianceFilter
     filterset_form = forms.ConfigComplianceFilterForm
-    queryset = models.ConfigCompliance.objects.all()
+    queryset = models.ConfigCompliance.objects.all().order_by("device__name")
     template_name = "nautobot_golden_config/compliance_report.html"
     table = tables.ConfigComplianceTable
+
+    def alter_queryset(self, request):
+        """Build actual runtime queryset as the build time queryset provides no information."""
+        return pivot(
+            self.queryset,
+            ["device", "device__name"],
+            "rule__feature__slug",
+            "compliance_int",
+            aggregation=Max,
+        )
 
     def extra_context(self):
         """Boilerplate code to modify before returning data."""
         return {"compliance": ENABLE_COMPLIANCE}
-
-    def alter_queryset(self, request):
-        """Build actual runtime queryset as the build time queryset provides no information."""
-        # Current implementation of for feature in ConfigCompliance.objects.values_list(), to always show all
-        # features, however this may or may not be desirable in the future. To modify, change to
-        # self.queryset.values_list()
-        return (
-            self.queryset.filter(get_allowed_os_from_nested())
-            .annotate(
-                **{
-                    models.ComplianceRule.objects.get(pk=rule_uuid).feature.name: Subquery(
-                        self.queryset.filter(
-                            device=OuterRef("device_id"), rule=models.ComplianceRule.objects.get(pk=rule_uuid)
-                        ).values("compliance")
-                    )
-                    for rule_uuid in models.ConfigCompliance.objects.values_list("rule", flat=True)
-                    .distinct()
-                    .order_by("rule__feature__name")
-                }
-            )
-            .distinct(
-                *list(models.ConfigCompliance.objects.values_list("rule__feature__name", flat=True).distinct())
-                + ["device__name"]
-            )
-            .order_by("device__name")
-        )
 
     def queryset_to_csv(self):
         """Export queryset of objects as comma-separated value (CSV)."""
@@ -157,7 +133,9 @@ class ConfigComplianceBulkDeleteView(generic.BulkDeleteView):
 
         form_cls = self.get_form()
 
-        obj_to_del = [item[0] for item in models.ConfigCompliance.objects.filter(pk__in=pk_list).values_list("device")]
+        obj_to_del = [
+            item[0] for item in models.ConfigCompliance.objects.filter(device__pk__in=pk_list).values_list("device")
+        ]
         if "_confirm" in request.POST:
             form = form_cls(request.POST)
             if form.is_valid():
@@ -197,6 +175,12 @@ class ConfigComplianceBulkDeleteView(generic.BulkDeleteView):
                 "return_url": self.get_return_url(request),
             },
         )
+
+
+class ConfigComplianceDeleteView(generic.ObjectDeleteView):
+    """View for deleting compliance rules."""
+
+    queryset = models.ConfigCompliance.objects.all()
 
 
 # ConfigCompliance Non-Standards
@@ -359,7 +343,7 @@ class ConfigComplianceOverviewOverviewHelper(ContentTypePermissionRequiredMixin,
     @staticmethod
     def plot_barchart_visual(qs):  # pylint: disable=too-many-locals
         """Construct report visual from queryset."""
-        labels = [item["rule__feature__name"] for item in qs]
+        labels = [item["rule__feature__slug"] for item in qs]
 
         compliant = [item["compliant"] for item in qs]
         non_compliant = [item["non_compliant"] for item in qs]
@@ -435,11 +419,11 @@ class ConfigComplianceOverview(generic.ObjectListView):
     template_name = "nautobot_golden_config/compliance_overview_report.html"
     kind = "Features"
     queryset = (
-        models.ConfigCompliance.objects.values("rule__feature__name")
+        models.ConfigCompliance.objects.values("rule__feature__slug")
         .annotate(
-            count=Count("rule__feature__name"),
-            compliant=Count("rule__feature__name", filter=Q(compliance=True)),
-            non_compliant=Count("rule__feature__name", filter=~Q(compliance=True)),
+            count=Count("rule__feature__slug"),
+            compliant=Count("rule__feature__slug", filter=Q(compliance=True)),
+            non_compliant=Count("rule__feature__slug", filter=~Q(compliance=True)),
             comp_percent=ExpressionWrapper(100 * F("compliant") / F("count"), output_field=FloatField()),
         )
         .order_by("-comp_percent")
@@ -468,7 +452,7 @@ class ConfigComplianceOverview(generic.ObjectListView):
             device_aggr: device global report dict
             feature_aggr: feature global report dict
         """
-        main_qs = models.ConfigCompliance.objects.filter(get_allowed_os_from_nested())
+        main_qs = models.ConfigCompliance.objects
 
         device_aggr, feature_aggr = {}, {}
         if self.filterset is not None:
@@ -526,10 +510,6 @@ class ConfigComplianceOverview(generic.ObjectListView):
             )
 
         return "\n".join(csv_data)
-
-    def alter_queryset(self, request):
-        """Build actual runtime queryset as the build time queryset does not consider changes to Settings."""
-        return self.queryset.filter(get_allowed_os_from_nested())
 
 
 #

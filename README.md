@@ -45,11 +45,9 @@ Drilling into a specific device and feature, you can get an immediate detailed u
 
 ## Plugin Settings
 
-There are three primary controls to determine the inclusion of a device within one of the four given components.
+There is a setting to determine the inclusion of any of the four given components.
 
-* The `allowed_os` will allow list the specific operating systems that can be included.
 * The `enable_backup`, `enable_compliance`, `enable_intended`, and `enable_sotagg` will toggle inclusion of the entire component.
-* Coming Soon: There is the ability to manage on a per device.
 
 # Installation
 
@@ -79,7 +77,6 @@ PLUGINS_CONFIG = {
         },
     },
     "nautobot_golden_config": {
-        "allowed_os": ["all"], # Should be limited to list of supported network operating systems based on platform slug value as defined in FAQ
         "per_feature_bar_width": 0.15,
         "per_feature_width": 13,
         "per_feature_height": 4,
@@ -98,7 +95,6 @@ The plugin behavior can be controlled with the following list of settings.
 
 | Key     | Example | Default | Description                          |
 | ------- | ------ | -------- | ------------------------------------- |
-| allowed_os | [cisco_ios, arista_eos] | [all] | A list of platforms supported, identified by the `platform_slug`, with special consideration for `all`. |
 | enable_backup | True | True | A boolean to represent whether or not to run backup configurations within the plugin. |
 | enable_compliance | True | True | A boolean to represent whether or not to run the compliance process within the plugin. |
 | enable_intended | True | True | A boolean to represent whether or not to generate intended configurations within the plugin. |

@@ -5,12 +5,7 @@ from django.db.models import Subquery
 
 from nautobot.dcim.models import Device, Platform, Region, Site, DeviceRole, DeviceType, Manufacturer, Rack, RackGroup
 from nautobot.extras.models import Status
-from nautobot.extras.forms import (
-    CustomFieldFilterForm,
-    CustomFieldModelCSVForm,
-    AddRemoveTagsForm,
-    CustomFieldBulkEditForm,
-)
+import nautobot.extras.forms as extras_forms
 from nautobot.tenancy.models import Tenant, TenantGroup
 from nautobot.utilities.forms import BootstrapMixin, DynamicModelMultipleChoiceField, DynamicModelChoiceField
 
@@ -32,7 +27,7 @@ class SettingsFeatureFilterForm(BootstrapMixin, forms.Form):
     name = forms.CharField(required=False)
 
 
-class GoldenConfigurationFilterForm(BootstrapMixin, CustomFieldFilterForm):
+class GoldenConfigurationFilterForm(BootstrapMixin, extras_forms.CustomFieldFilterForm):
     """Filter Form for GoldenConfiguration instances."""
 
     model = GoldenConfiguration
@@ -158,14 +153,14 @@ class ComplianceFeatureFilterForm(SettingsFeatureFilterForm):
     model = ComplianceFeature
 
 
-class ComplianceFeatureForm(BootstrapMixin, forms.ModelForm):
+class ComplianceFeatureForm(BootstrapMixin, extras_forms.CustomFieldModelForm, extras_forms.RelationshipModelForm):
     """Filter Form for ComplianceFeature instances."""
 
     class Meta:
         """Boilerplate form Meta data for compliance feature."""
 
         model = ComplianceFeature
-        fields = ("name",)
+        fields = ("name", "slug", "description")
 
 
 class GoldenConfigSettingsFeatureForm(BootstrapMixin, forms.ModelForm):
@@ -176,14 +171,15 @@ class GoldenConfigSettingsFeatureForm(BootstrapMixin, forms.ModelForm):
 
         model = GoldenConfigSettings
         fields = (
+            "backup_repository",
             "backup_path_template",
+            "intended_repository",
             "intended_path_template",
+            "jinja_repository",
             "jinja_path_template",
             "backup_test_connectivity",
-            "shorten_sot_query",
+            "scope",
             "sot_agg_query",
-            "only_primary_ip",
-            "exclude_chassis_members",
         )
 
 
@@ -234,7 +230,7 @@ class ConfigReplaceFeatureFilterForm(SettingsFeatureFilterForm):
     model = ConfigReplace
 
 
-class ConfigRemoveCSVForm(CustomFieldModelCSVForm):
+class ConfigRemoveCSVForm(extras_forms.CustomFieldModelCSVForm):
     """CSV Form for ConfigRemove instances."""
 
     class Meta:
@@ -244,7 +240,7 @@ class ConfigRemoveCSVForm(CustomFieldModelCSVForm):
         fields = ConfigRemove.csv_headers
 
 
-class ConfigRemoveBulkEditForm(BootstrapMixin, AddRemoveTagsForm, CustomFieldBulkEditForm):
+class ConfigRemoveBulkEditForm(BootstrapMixin, extras_forms.AddRemoveTagsForm, extras_forms.CustomFieldBulkEditForm):
     """BulkEdit form for ConfigRemove instances."""
 
     pk = forms.ModelMultipleChoiceField(queryset=ConfigRemove.objects.all(), widget=forms.MultipleHiddenInput)
@@ -255,7 +251,7 @@ class ConfigRemoveBulkEditForm(BootstrapMixin, AddRemoveTagsForm, CustomFieldBul
         nullable_fields = []
 
 
-class ConfigReplaceCSVForm(CustomFieldModelCSVForm):
+class ConfigReplaceCSVForm(extras_forms.CustomFieldModelCSVForm):
     """CSV Form for ConfigReplace instances."""
 
     class Meta:
@@ -265,7 +261,7 @@ class ConfigReplaceCSVForm(CustomFieldModelCSVForm):
         fields = ConfigReplace.csv_headers
 
 
-class ConfigReplaceBulkEditForm(BootstrapMixin, AddRemoveTagsForm, CustomFieldBulkEditForm):
+class ConfigReplaceBulkEditForm(BootstrapMixin, extras_forms.AddRemoveTagsForm, extras_forms.CustomFieldBulkEditForm):
     """BulkEdit form for ConfigReplace instances."""
 
     pk = forms.ModelMultipleChoiceField(queryset=ConfigReplace.objects.all(), widget=forms.MultipleHiddenInput)

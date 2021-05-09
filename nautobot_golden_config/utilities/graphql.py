@@ -36,9 +36,7 @@ def graph_ql_query(request, device, query):
         return (400, result.to_dict())
     data = result.data
 
-    global_settings = GoldenConfigSettings.objects.first()
-    if global_settings.shorten_sot_query is True:
-        data = data["device"]
+    data = data.get("device", {})
 
     if PLUGIN_CFG.get("sot_agg_transposer"):
         LOGGER.debug("GraphQL - tansform data with function: `%s`", str(PLUGIN_CFG.get("sot_agg_transposer")))

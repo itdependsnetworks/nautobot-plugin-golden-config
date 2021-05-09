@@ -14,7 +14,7 @@ from nautobot_plugin_nornir.plugins.inventory.nautobot_orm import NautobotORMInv
 from nautobot_plugin_nornir.constants import NORNIR_SETTINGS
 
 from nautobot_golden_config.utilities.helper import (
-    get_allowed_os,
+    get_job_filter,
     get_dispatcher,
     verify_global_settings,
     check_jinja_template,
@@ -113,7 +113,7 @@ def config_backup(job_result, data, backup_root_folder):
             "options": {
                 "credentials_class": NORNIR_SETTINGS.get("credentials"),
                 "params": NORNIR_SETTINGS.get("inventory_params"),
-                "queryset": get_allowed_os(data),
+                "queryset": get_job_filter(data),
                 "defaults": {"now": now},
             },
         },

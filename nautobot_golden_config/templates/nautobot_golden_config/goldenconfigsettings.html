@@ -61,12 +61,24 @@
             </div>
             <table class="table table-hover panel-body attr-table">
                 <tr>
+                    <td>Backup Repository</td>
+                    <td>{{ object.backup_repository }}</td>
+                </tr>
+                <tr>
                     <td>Backup Path Template</td>
                     <td>{{ object.backup_path_template }}</td>
                 </tr>
                 <tr>
+                    <td>Intended Repository</td>
+                    <td>{{ object.intended_repository }}</td>
+                </tr>
+                <tr>
                     <td>Intended Path Template</td>
                     <td>{{ object.intended_path_template }}</td>
+                </tr>
+                <tr>
+                    <td>Jinja Repository</td>
+                    <td>{{ object.jinja_repository }}</td>
                 </tr>
                 <tr>
                     <td>Jinja Path Template</td>
@@ -77,20 +89,12 @@
                     <td>{{ object.backup_test_connectivity }}</td>
                 </tr>
                 <tr>
-                    <td>Shorten SQL Query</td>
-                    <td>{{ object.shorten_sot_query }}</td>
+                    <td><a href="{{ object.get_url_to_filtered_device_list }}">Scope of Devices</td>
+                    <td>{{ object.scope }}</a></td>
                 </tr>
                 <tr>
                     <td>SoT Aggregation Query</td>
                     <td>{{ object.sot_agg_query }}</td>
-                </tr>
-                <tr>
-                    <td>Primary IP Only</td>
-                    <td>{{ object.only_primary_ip }}</td>
-                </tr>
-                <tr>
-                    <td>Exclude Chassis Members</td>
-                    <td>{{ object.exclude_chassis_members }}</td>
                 </tr>
         </div>
     </table>

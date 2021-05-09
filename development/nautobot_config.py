@@ -305,7 +305,6 @@ PLUGINS_CONFIG = {
         },
     },
     "nautobot_golden_config": {
-        "allowed_os": os.environ.get("ALLOWED_OS", "all").split(","),
         "per_feature_bar_width": float(os.environ.get("PER_FEATURE_BAR_WIDTH", 0.15)),
         "per_feature_width": int(os.environ.get("PER_FEATURE_WIDTH", 13)),
         "per_feature_height": int(os.environ.get("PER_FEATURE_HEIGHT", 4)),

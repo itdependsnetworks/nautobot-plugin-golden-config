@@ -12,7 +12,6 @@ from nautobot.utilities.tables import (
 from nautobot_golden_config import models
 from nautobot_golden_config.utilities.constant import ENABLE_BACKUP, ENABLE_COMPLIANCE, ENABLE_INTENDED, CONFIG_FEATURES
 
-
 BACKUP_SUCCESS = """
 {% if record.backup_last_success_date and record.backup_last_attempt_date == record.backup_last_success_date %}
     <span class="text-success" id="actions">
@@ -133,9 +132,9 @@ class ComplianceColumn(Column):
 
     def render(self, value):
         """Render an entry in this column."""
-        if value is True:  # pylint: disable=no-else-return
+        if value == 1:  # pylint: disable=no-else-return
             return format_html('<span class="text-success"><i class="mdi mdi-check-bold"></i></span>')
-        elif value is False:
+        elif value == 0:
             return format_html('<span class="text-danger"><i class="mdi mdi-close-thick"></i></span>')
         else:  # value is None
             return format_html('<span class="mdi mdi-minus"></span>')
@@ -149,10 +148,11 @@ class ComplianceColumn(Column):
 class ConfigComplianceTable(BaseTable):
     """Table for rendering a listing of Device entries and their associated ConfigCompliance record status."""
 
-    pk = ToggleColumn()
-    device__name = TemplateColumn(
-        template_code="""<a href="{% url 'plugins:nautobot_golden_config:configcompliance' pk=record.device.pk  %}" <strong>{{ record.device }}</strong></a> """
+    pk = ToggleColumn(accessor=A("device"))
+    device = TemplateColumn(
+        template_code="""<a href="{% url 'plugins:nautobot_golden_config:configcompliance' pk=record.device  %}" <strong>{{ record.device__name }}</strong></a> """
     )
+    # device = LinkColumn("plugins:nautobot_golden_config:configcompliance", text=lambda record: record.device__name, args=[A("device")])
 
     def __init__(self, *args, **kwargs):
         """Override default values to dynamically add columns."""
@@ -179,7 +179,7 @@ class ConfigComplianceTable(BaseTable):
         model = models.ConfigCompliance
         fields = (
             "pk",
-            "device__name",
+            "device",
         )
         # All other fields (ConfigCompliance names) are constructed dynamically at instantiation time - see views.py
 
@@ -187,11 +187,11 @@ class ConfigComplianceTable(BaseTable):
 class ConfigComplianceGlobalFeatureTable(BaseTable):
     """Table for feature compliance report."""
 
+    name = Column(accessor="rule__feature__slug", verbose_name="Feature")
     count = Column(accessor="count", verbose_name="Total")
     compliant = Column(accessor="compliant", verbose_name="Compliant")
     non_compliant = Column(accessor="non_compliant", verbose_name="Non-Compliant")
     comp_percent = PercentageColumn(accessor="comp_percent", verbose_name="Compliance (%)")
-    name = Column(accessor="name", verbose_name="Feature")
 
     class Meta(BaseTable.Meta):
         """Metaclass attributes of ConfigComplianceGlobalFeatureTable."""
@@ -210,15 +210,15 @@ class ConfigComplianceGlobalFeatureTable(BaseTable):
 class ConfigComplianceDeleteTable(BaseTable):
     """Table for device compliance report."""
 
+    feature = Column(accessor="rule__feature__name", verbose_name="Feature")
+
     class Meta(BaseTable.Meta):
         """Metaclass attributes of ConfigComplianceDeleteTable."""
 
-        name = Column(accessor="name", verbose_name="Feature")
-        device__name = Column(accessor="device__name", verbose_name="Device Name")
+        device = Column(accessor="device__name", verbose_name="Device Name")
         compliance = Column(accessor="compliance", verbose_name="Compliance")
-
         model = models.ConfigCompliance
-        fields = ("device__name", "name", "compliance")
+        fields = ("device", "feature", "compliance")
 
 
 class GoldenConfigurationTable(BaseTable):
@@ -259,8 +259,8 @@ class ComplianceFeatureTable(BaseTable):
         """Table to display Compliance Features Meta Data."""
 
         model = models.ComplianceFeature
-        fields = ("pk", "name")
-        default_columns = ("pk", "name")
+        fields = ("pk", "name", "slug", "description")
+        default_columns = ("pk", "name", "slug", "description")
 
 
 class ComplianceRuleTable(BaseTable):

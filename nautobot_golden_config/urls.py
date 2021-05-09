@@ -14,6 +14,11 @@ urlpatterns = [
     path("config-compliance/overview/", views.ConfigComplianceOverview.as_view(), name="configcompliance_report"),
     path("config-compliance/<uuid:pk>", views.ConfigComplianceView.as_view(), name="configcompliance"),
     path(
+        "config-compliance/<uuid:pk>/delete/",
+        views.ConfigComplianceDeleteView.as_view(),
+        name="configcompliance_delete",
+    ),
+    path(
         "config-compliance/<uuid:pk>/<str:config_type>/",
         views.ConfigComplianceDetails.as_view(),
         name="configcompliance_details",
