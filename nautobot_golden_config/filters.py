@@ -6,7 +6,7 @@ from django.db.models import Q, Subquery
 
 from nautobot.dcim.models import Device, Platform, Region, Site, DeviceRole, DeviceType, Manufacturer, RackGroup, Rack
 from nautobot.extras.models import Status
-from nautobot.extras.filters import CreatedUpdatedFilterSet, StatusFilter
+from nautobot.extras.filters import CreatedUpdatedFilterSet, StatusFilter, CustomFieldModelFilterSet
 from nautobot.tenancy.models import Tenant, TenantGroup
 from nautobot.utilities.filters import TreeNodeMultipleChoiceFilter
 
@@ -211,23 +211,8 @@ class ConfigComplianceFilter(GoldenConfigFilter):
         ]
 
 
-class SettingsFeatureFilter(django_filters.FilterSet):
-    """Boilerplate filter for compliance."""
-
-    q = django_filters.CharFilter(
-        method="search",
-        label="Search",
-    )
-
-    class Meta:
-        """Boilerplate filter Meta data for compliance."""
-
-        model = models.ComplianceRule
-        fields = ["q"]
-
-
-class ComplianceFeatureFilter(SettingsFeatureFilter):
-    """Inherits Base Class SettingsFeatureFilter."""
+class ComplianceFeatureFilter(CustomFieldModelFilterSet):
+    """Inherits Base Class CustomFieldModelFilterSet."""
 
     q = django_filters.CharFilter(
         method="search",
@@ -238,34 +223,34 @@ class ComplianceFeatureFilter(SettingsFeatureFilter):
         """Boilerplate filter Meta data for compliance feature."""
 
         model = models.ComplianceFeature
-        fields = ["q"]
+        fields = ["q", "name"]
 
 
-class ComplianceRuleFilter(SettingsFeatureFilter):
-    """Inherits Base Class SettingsFeatureFilter."""
+class ComplianceRuleFilter(CustomFieldModelFilterSet):
+    """Inherits Base Class CustomFieldModelFilterSet."""
 
     class Meta:
         """Boilerplate filter Meta data for compliance rule."""
 
         model = models.ComplianceRule
-        fields = ["q"]
+        fields = ["platform", "feature"]
 
 
-class ConfigRemoveFilter(SettingsFeatureFilter):
-    """Inherits Base Class SettingsFeatureFilter."""
+class ConfigRemoveFilter(CustomFieldModelFilterSet):
+    """Inherits Base Class CustomFieldModelFilterSet."""
 
     class Meta:
         """Boilerplate filter Meta data for Config Remove."""
 
         model = models.ConfigRemove
-        fields = ["q"]
+        fields = ["platform", "name"]
 
 
-class ConfigReplaceFilter(SettingsFeatureFilter):
-    """Inherits Base Class SettingsFeatureFilter."""
+class ConfigReplaceFilter(CustomFieldModelFilterSet):
+    """Inherits Base Class CustomFieldModelFilterSet."""
 
     class Meta:
         """Boilerplate filter Meta data for Config Remove."""
 
         model = models.ConfigReplace
-        fields = ["q"]
+        fields = ["platform", "name"]

@@ -12,13 +12,6 @@ from nautobot.tenancy.models import Tenant, TenantGroup
 from nautobot_golden_config import models
 
 
-class SettingsFeatureFilterForm(utilities_forms.BootstrapMixin, forms.Form):
-    """Form for ComplianceRule instances."""
-
-    platform = utilities_forms.DynamicModelChoiceField(queryset=Platform.objects.all(), required=False)
-    name = forms.CharField(required=False)
-
-
 class GoldenConfigFilterForm(utilities_forms.BootstrapMixin, extras_forms.CustomFieldFilterForm):
     """Filter Form for GoldenConfig instances."""
 
@@ -147,10 +140,14 @@ class ComplianceRuleForm(
         )
 
 
-class ComplianceRuleFilterForm(SettingsFeatureFilterForm):
+class ComplianceRuleFilterForm(utilities_forms.BootstrapMixin, extras_forms.CustomFieldFilterForm):
     """Form for ComplianceRule instances."""
 
     model = models.ComplianceRule
+    platform = utilities_forms.DynamicModelMultipleChoiceField(queryset=Platform.objects.all(), required=False)
+    feature = utilities_forms.DynamicModelMultipleChoiceField(
+        queryset=models.ComplianceFeature.objects.all(), required=False
+    )
 
 
 class ComplianceRuleBulkEditForm(
@@ -191,10 +188,12 @@ class ComplianceFeatureForm(
         fields = ("name", "slug", "description")
 
 
-class ComplianceFeatureFilterForm(SettingsFeatureFilterForm):
+class ComplianceFeatureFilterForm(utilities_forms.BootstrapMixin, extras_forms.CustomFieldFilterForm):
     """Form for ComplianceFeature instances."""
 
     model = models.ComplianceFeature
+
+    name = utilities_forms.DynamicModelChoiceField(queryset=models.ComplianceFeature.objects.all(), required=False)
 
 
 class ComplianceFeatureBulkEditForm(
@@ -244,10 +243,13 @@ class ConfigRemoveForm(
         )
 
 
-class ConfigRemoveFeatureFilterForm(SettingsFeatureFilterForm):
+class ConfigRemoveFeatureFilterForm(utilities_forms.BootstrapMixin, extras_forms.CustomFieldFilterForm):
     """Filter Form for Line Removal."""
 
     model = models.ConfigRemove
+
+    platform = utilities_forms.DynamicModelMultipleChoiceField(queryset=Platform.objects.all(), required=False)
+    name = utilities_forms.DynamicModelChoiceField(queryset=models.ConfigRemove.objects.all(), required=False)
 
 
 class ConfigRemoveBulkEditForm(
@@ -296,10 +298,13 @@ class ConfigReplaceForm(
         )
 
 
-class ConfigReplaceFeatureFilterForm(SettingsFeatureFilterForm):
+class ConfigReplaceFeatureFilterForm(utilities_forms.BootstrapMixin, extras_forms.CustomFieldFilterForm):
     """Filter Form for Line Replacement."""
 
     model = models.ConfigReplace
+
+    platform = utilities_forms.DynamicModelMultipleChoiceField(queryset=Platform.objects.all(), required=False)
+    name = utilities_forms.DynamicModelChoiceField(queryset=models.ConfigReplace.objects.all(), required=False)
 
 
 class ConfigReplaceCSVForm(extras_forms.CustomFieldModelCSVForm):

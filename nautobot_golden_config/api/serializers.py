@@ -1,5 +1,5 @@
 """REST API serializer capabilities for graphql plugin."""
-
+# pylint: disable=too-many-ancestors
 from rest_framework import serializers
 from nautobot.extras.api.customfields import CustomFieldModelSerializer
 from nautobot.extras.api.serializers import TaggedObjectSerializer
@@ -24,18 +24,6 @@ class ComplianceFeatureSerializer(TaggedObjectSerializer, CustomFieldModelSerial
         """Set Meta Data for ComplianceFeature, will serialize all fields."""
 
         model = models.ComplianceFeature
-        fields = "__all__"
-
-
-class ComplianceRuleSerializer(TaggedObjectSerializer, CustomFieldModelSerializer):
-    """Serializer for ComplianceRule object."""
-
-    url = serializers.HyperlinkedIdentityField(view_name="plugins-api:nautobot_golden_config-api:compliancerule-detail")
-
-    class Meta:
-        """Set Meta Data for ComplianceRule, will serialize all fields."""
-
-        model = models.ComplianceRule
         fields = "__all__"
 
 

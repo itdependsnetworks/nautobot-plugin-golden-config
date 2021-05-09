@@ -16,6 +16,7 @@ class GoldenConfigRootView(APIRootView):
     """Golden Config API root view."""
 
     def get_view_name(self):
+        """Golden Config API root view boilerplate."""
         return "Golden Config"
 
 

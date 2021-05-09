@@ -53,7 +53,7 @@ class ComplianceFeature(PrimaryModel):
         return (self.name, self.slug, self.description)
 
     class Meta:
-        """Meta information for ComplianceRule model."""
+        """Meta information for ComplianceFeature model."""
 
         ordering = ("slug",)
 
@@ -62,7 +62,7 @@ class ComplianceFeature(PrimaryModel):
         return self.slug
 
     def get_absolute_url(self):
-        """Absolute url for the ComplianceRule instance."""
+        """Absolute url for the ComplianceFeature instance."""
         return reverse("plugins:nautobot_golden_config:compliancefeature", args=[self.pk])
 
 

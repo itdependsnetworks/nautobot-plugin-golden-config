@@ -68,7 +68,9 @@
             <table class="table table-hover panel-body attr-table">
                 <tr>
                     <td>Backup Repository</td>
-                    <td>{{ object.backup_repository }}</td>
+                    {% if object.backup_repository %}
+                    <td><a href="{% url 'extras:gitrepository' slug=object.backup_repository.slug %}">{{ object.backup_repository }}</a></td>
+                    {% endif %}
                 </tr>
                 <tr>
                     <td>Backup Path Template</td>
@@ -76,7 +78,9 @@
                 </tr>
                 <tr>
                     <td>Intended Repository</td>
-                    <td>{{ object.intended_repository }}</td>
+                    {% if object.intended_repository %}
+                    <td><a href="{% url 'extras:gitrepository' slug=object.intended_repository.slug %}">{{ object.intended_repository }}</a></td>
+                    {% endif %}
                 </tr>
                 <tr>
                     <td>Intended Path Template</td>
@@ -84,7 +88,10 @@
                 </tr>
                 <tr>
                     <td>Jinja Repository</td>
-                    <td>{{ object.jinja_repository }}</td>
+                    {% if object.jinja_repository %}
+                    <td><a href="{% url 'extras:gitrepository' slug=object.jinja_repository.slug %}">{{ object.jinja_repository }}</a></td>
+                    {% endif %}
+
                 </tr>
                 <tr>
                     <td>Jinja Path Template</td>
@@ -92,7 +99,17 @@
                 </tr>
                 <tr>
                     <td>Backup Test Connectivity</td>
-                    <td>{{ object.backup_test_connectivity }}</td>
+                    <td>
+                        {% if object.backup_test_connectivity %}
+                            <span class="text-success">
+                                <i class="mdi mdi-check-bold"></i>
+                            </span>
+                        {% else %}
+                            <span class="text-danger">
+                                <i class="mdi mdi-close"></i>
+                            </span>
+                        {% endif %}
+                    </td>
                 </tr>
                 <tr>
                     <td><a href="{{ object.get_url_to_filtered_device_list }}">Scope of Devices</td>
