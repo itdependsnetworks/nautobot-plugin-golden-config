@@ -15,7 +15,7 @@ class GoldenConfig(PluginConfig):
     """Plugin configuration for the nautobot_golden_config plugin."""
 
     name = "nautobot_golden_config"
-    verbose_name = "Golden Configuration"
+    verbose_name = "Nautobot Golden Configuration"
     version = __version__
     author = "Network to Code, LLC"
     author_email = "opensource@networktocode.com"
